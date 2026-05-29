@@ -376,6 +376,8 @@
                 </div>
             </div>
 
+            <div class="tabs-container" id="admin-tabs"></div>
+
             <div class="admin-table-container">
                 <table id="admin-table">
                     <thead>
@@ -422,8 +424,10 @@
     let showingTrash = false;
     const MAX_DAILY_TASKS = 15; 
 
+    // タブの現在の状態を保持する変数
     let currentOverdueTab = 'ALL';
     let currentTodayTab = 'ALL';
+    let currentAdminTab = 'ALL'; // ★追加
 
     window.onload = () => {
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -456,7 +460,6 @@
         document.getElementById('note-zaikei').value = globalNotes.zaikei;
         document.getElementById('note-kankei').value = globalNotes.kankei;
         
-        // 科目欄の変更イベントを監視して分野候補を連動
         document.getElementById('q-subject').addEventListener('input', updateDatalists);
         
         refreshUI();
@@ -672,7 +675,7 @@
         updateDatalists();
     }
 
-    // ★ 未分類を一番後ろにするカスタムソート
+    // ★ 未分類を一番後ろにするカスタムソート（すべてのタブ生成に適用）
     function renderTabs(tasks, containerId, currentActiveTab, switchFunctionName) {
         const tabsContainer = document.getElementById(containerId);
         if (tasks.length === 0) {
@@ -696,6 +699,7 @@
 
     function switchOverdueTab(subject) { currentOverdueTab = subject; refreshUI(); }
     function switchTodayTab(subject) { currentTodayTab = subject; refreshUI(); }
+    function switchAdminTab(subject) { currentAdminTab = subject; renderAdminTable(); } // ★追加
 
     function getConditionalClass(textbook) {
         if (!textbook) return '';
@@ -760,13 +764,23 @@
         });
     }
 
+    // ★ 編集画面のテーブル描画ロジックをタブ連動型にアップデート
     function renderAdminTable() {
         const tbody = document.getElementById('admin-tbody');
         tbody.innerHTML = '';
         const source = showingTrash ? trash : questions;
-        const zaikei = source.filter(q => q.textbook && q.textbook.includes('財計'));
-        const kankei = source.filter(q => q.textbook && q.textbook.includes('管計'));
-        const others = source.filter(q => q.textbook && !q.textbook.includes('財計') && !q.textbook.includes('管計'));
+        
+        // タブの生成と状態チェック
+        const adminSubjects = [...new Set(source.map(q => q.subject || "未分類"))];
+        if (currentAdminTab !== 'ALL' && !adminSubjects.includes(currentAdminTab)) {
+            currentAdminTab = 'ALL';
+        }
+        renderTabs(source, 'admin-tabs', currentAdminTab, 'switchAdminTab');
+        
+        // 選択されたタブでデータをフィルタリング
+        let filteredSource = currentAdminTab === 'ALL' 
+            ? source 
+            : source.filter(q => (q.subject || "未分類") === currentAdminTab);
         
         const sortFn = (a, b) => {
             let vA = a[currentSort.key];
@@ -775,40 +789,38 @@
             return currentSort.asc ? (vA || 0) - (vB || 0) : (vB || 0) - (vA || 0);
         };
         
-        [{ label: '--- 財務会計系 ---', data: zaikei.sort(sortFn) },
-         { label: '--- 管理会計系 ---', data: kankei.sort(sortFn) },
-         { label: '--- その他 ---', data: others.sort(sortFn) }].forEach(group => {
-            if (group.data.length > 0) {
-                const separator = document.createElement('tr');
-                separator.innerHTML = `<td colspan="9" style="background:#eee; font-weight:bold; text-align:center; padding:2px; font-size:10px;">${group.label}</td>`;
-                tbody.appendChild(separator);
-                group.data.forEach(q => {
-                    const row = document.createElement('tr');
-                    row.className = getConditionalClass(q.textbook);
-                    const dateDisplay = q.isSuspended 
-                        ? '<span class="badge badge-suspended">⏸️ 除外中</span>' 
-                        : new Date(q.nextDate).toLocaleDateString();
-                    const dateStyle = (!q.isSuspended && q.nextDate < getToday()) ? 'color:red;font-weight:bold;' : '';
+        filteredSource.sort(sortFn);
+        
+        if (filteredSource.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:10px;">データがありません</td></tr>';
+            return;
+        }
 
-                    row.innerHTML = `
-                        <td><input type="checkbox" class="admin-checkbox" data-id="${q.id}"></td>
-                        <td>${q.textbook}</td>
-                        <td>${q.subject || '未分類'}</td>
-                        <td>${q.field || '未分類'}</td>
-                        <td style="font-weight:bold;">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark" style="font-size:9px;">苦手</span>' : ''}</td>
-                        <td style="${dateStyle}">${dateDisplay}</td>
-                        <td>${q.correctCount}</td>
-                        <td>${q.incorrectCount}</td>
-                        <td>
-                            ${showingTrash ? 
-                                `<button class="btn-success" style="font-size:10px; padding:4px 8px;" onclick="restoreQuestion('${q.id}')">復元</button>
-                                 <button class="btn-danger" style="font-size:10px; padding:4px 8px;" onclick="permanentlyDelete('${q.id}')">完全削除</button>` : 
-                                `<button class="btn-primary" style="font-size:10px; padding:4px 8px;" onclick="editQuestion('${q.id}')">編集</button>
-                                 <button class="btn-danger" style="font-size:10px; padding:4px 8px;" onclick="deleteQuestion('${q.id}')">削除</button>`}
-                        </td>`;
-                    tbody.appendChild(row);
-                });
-            }
+        filteredSource.forEach(q => {
+            const row = document.createElement('tr');
+            row.className = getConditionalClass(q.textbook);
+            const dateDisplay = q.isSuspended 
+                ? '<span class="badge badge-suspended">⏸️ 除外中</span>' 
+                : new Date(q.nextDate).toLocaleDateString();
+            const dateStyle = (!q.isSuspended && q.nextDate < getToday()) ? 'color:red;font-weight:bold;' : '';
+
+            row.innerHTML = `
+                <td><input type="checkbox" class="admin-checkbox" data-id="${q.id}"></td>
+                <td>${q.textbook}</td>
+                <td>${q.subject || '未分類'}</td>
+                <td>${q.field || '未分類'}</td>
+                <td style="font-weight:bold;">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark" style="font-size:9px;">苦手</span>' : ''}</td>
+                <td style="${dateStyle}">${dateDisplay}</td>
+                <td>${q.correctCount}</td>
+                <td>${q.incorrectCount}</td>
+                <td>
+                    ${showingTrash ? 
+                        `<button class="btn-success" style="font-size:10px; padding:4px 8px;" onclick="restoreQuestion('${q.id}')">復元</button>
+                         <button class="btn-danger" style="font-size:10px; padding:4px 8px;" onclick="permanentlyDelete('${q.id}')">完全削除</button>` : 
+                        `<button class="btn-primary" style="font-size:10px; padding:4px 8px;" onclick="editQuestion('${q.id}')">編集</button>
+                         <button class="btn-danger" style="font-size:10px; padding:4px 8px;" onclick="deleteQuestion('${q.id}')">削除</button>`}
+                </td>`;
+            tbody.appendChild(row);
         });
     }
 
@@ -907,7 +919,6 @@
         renderAdminTable();
     }
 
-    // ★ 科目連動型の動的 datalist 生成関数
     function updateDatalists() {
         const allData = [...questions, ...trash];
         const textbooks = [...new Set(allData.map(q => q.textbook || ""))].filter(Boolean);
