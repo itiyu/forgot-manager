@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>忘却曲線マネージャー</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --bg: #f8f9fa;
+            --text: #333;
+            --color-zaikei: #ffebee;
+            --color-kankei: #fff3e0;
+            --color-sozei: #f3e5f5; 
+            --color-keiei: #e8f5e9; 
+        }
+
+        body {
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            color: var(--secondary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 15px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.8; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-gray { background: #95a5a6; color: white; }
+
+        .study-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+        }
+
+        .task-list-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            background: var(--secondary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .badge-suspended {
+            background: #7f8c8d;
+            font-size: 10px;
+        }
+
+        .problem-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            background: #fff;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .bg-zaikei { background-color: var(--color-zaikei) !important; }
+        .bg-kankei { background-color: var(--color-kankei) !important; }
+        .bg-sozei { background-color: var(--color-sozei) !important; }
+        .bg-keiei { background-color: var(--color-keiei) !important; }
+        .text-zaikei { color: #c0392b !important; }
+        .text-kankei { color: #d35400 !important; }
+        .text-sozei { color: #8e44ad !important; }
+        .text-keiei { color: #27ae60 !important; }
+
+        .problem-meta {
+            font-size: 11px;
+            color: #7f8c8d;
+        }
+
+        .problem-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nigete-mark {
+            background: var(--danger);
+            color: white;
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .memo-box {
+            background: #fff9c4;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 13px;
+            border-left: 4px solid #f1c40f;
+        }
+
+        .admin-table-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 11.5px;
+        }
+
+        th {
+            background: #f1f1f1;
+            padding: 8px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        th:hover { background: #e0e0e0; }
+        td { padding: 4px 8px; border-bottom: 1px solid #eee; }
+        .sort-icon::after { content: " ↕"; opacity: 0.3; font-size: 10px; }
+
+        details summary {
+            cursor: pointer;
+            padding: 12px;
+            background: #eee;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            user-select: none;
+        }
+
+        .hidden { display: none !important; }
+
+        .sidebar-item {
+            font-size: 12px;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+
+        .field-group { margin-bottom: 25px; }
+        .field-header {
+            background: #ecf0f1;
+            padding: 6px 12px;
+            font-weight: bold;
+            color: var(--primary);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            border-left: 5px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .bulk-actions {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .tabs-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .tab-btn {
+            background: #e0e0e0;
+            color: #555;
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px 4px 0 0;
+            font-weight: bold;
+            border: none;
+        }
+
+        .tab-btn.active { background: var(--primary); color: white; }
+        .tab-btn .tab-count {
+            background: rgba(0,0,0,0.15);
+            color: inherit;
+            padding: 1px 5px;
+            border-radius: 8px;
+            font-size: 10px;
+            margin-left: 5px;
+        }
+        .tab-btn.active .tab-count { background: rgba(255,255,255,0.3); }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.2);
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .study-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>忘却曲線マネージャー</h1>
+
+    <div class="card" style="background: #e8f4fd; border-left: 5px solid var(--primary); padding: 15px;">
+        <details id="sync-details">
+            <summary style="font-weight: bold; color: var(--secondary); font-size: 15px;">
+                ☁️ クラウド同期設定 (PC・スマホ連動) <span id="sync-status" style="font-size:12px; margin-left:10px; color:#2c3e50; background:#fff; padding:2px 8px; border-radius:10px; border:1px solid #cbd5e1;">未設定 (ローカル保存)</span>
+            </summary>
+            <div style="margin-top: 15px; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
+                <p style="font-size:12px; color:#555; margin:0 0 12px 0;">GitHubのGist機能を利用してデータをオンライン同期します。一度設定すれば自動で同期されます。</p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>GitHub トークン (Token)</label>
+                        <input type="password" id="sync-token" placeholder="ghp_ から始まる文字列" onchange="saveSyncSettings()">
+                    </div>
+                    <div class="form-group">
+                        <label>Gist ID</label>
+                        <input type="text" id="sync-gist-id" placeholder="32桁の英数字" onchange="saveSyncSettings()">
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="btn-primary" style="font-size:11px; padding:6px 12px;" onclick="manualSync()">🔄 今すぐ手動同期</button>
+                    <button class="btn-gray" style="font-size:11px; padding:6px 12px;" onclick="testCloudConnection()">🔍 接続テスト</button>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <div class="card">
+        <h2>新規問題の登録</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>問題番号 / ラベル (name) <span style="font-weight:normal; color:#e74c3c; font-size:10px;">※「例題1~5」で一括登録可</span></label>
+                <input type="text" id="q-name" placeholder="例: 例題1~5 または 2-1~2-5">
+            </div>
+            <div class="form-group">
+                <label>科目 (subject)</label>
+                <input type="text" id="q-subject" list="subjects-dl" placeholder="例: 財務会計論">
+                <datalist id="subjects-dl"></datalist>
+            </div>
+            <div class="form-group">
+                <label>分野 (field)</label>
+                <input type="text" id="q-field" list="fields-dl" placeholder="例: 構造論点">
+                <datalist id="fields-dl"></datalist>
+            </div>
+            <div class="form-group">
+                <label>テキスト名 (textbook)</label>
+                <input type="text" id="q-textbook" list="textbooks-dl" placeholder="テキストを選択">
+                <datalist id="textbooks-dl"></datalist>
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>メモ (解説や補足など)</label>
+            <textarea id="q-memo" rows="2" placeholder="内容があれば学習時に表示されます"></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn-primary" onclick="saveQuestion()">問題を新規登録</button>
+        </div>
+    </div>
+
+    <div class="study-grid">
+        <div class="main-content">
+            <div class="card">
+                <div class="task-list-title">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <h3 style="color:var(--danger); margin:0;">🚨 期限超過</h3>
+                        <button class="btn-gray" style="font-size:10px; padding:4px 8px; display:none;" onclick="suspendOverdueExceptWeak()" id="suspend-overdue-btn">一括除外</button>
+                    </div>
+                    <span class="badge" id="overdue-total">0</span>
+                </div>
+                <div class="tabs-container" id="overdue-tabs"></div>
+                <div id="overdue-container"></div>
+            </div>
+
+            <div class="card">
+                <div class="task-list-title">
+                    <h3 style="color:var(--primary); margin:0;">📅 今日やるべきもの</h3>
+                    <span class="badge" id="today-total">0</span>
+                </div>
+                <div class="tabs-container" id="today-tabs"></div>
+                <div id="today-container"></div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="card">
+                <div class="task-list-title">
+                    <h3 style="margin:0;">🌅 明日の予定</h3>
+                    <span class="badge" id="tomorrow-total">0</span>
+                </div>
+                <div id="tomorrow-container"></div>
+            </div>
+
+            <div class="card bg-zaikei">
+                <div class="task-list-title">
+                    <h3 class="text-zaikei" style="margin:0;">📓 財務会計 メモ</h3>
+                </div>
+                <div style="font-size: 11px; color: #666; margin-bottom: 8px;">間違えた理由や弱点・気づきを記録</div>
+                <textarea id="note-zaikei" rows="6" placeholder="例: 減損会計の判定基準を間違えがち..." oninput="saveNotes()"></textarea>
+            </div>
+
+            <div class="card bg-kankei">
+                <div class="task-list-title">
+                    <h3 class="text-kankei" style="margin:0;">📓 管理会計 メモ</h3>
+                </div>
+                <div style="font-size: 11px; color: #666; margin-bottom: 8px;">間違えた理由や弱点・気づきを記録</div>
+                <textarea id="note-kankei" rows="6" placeholder="例: 直接原価計算の固定費の処理を忘れた..." oninput="saveNotes()"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <details id="admin-details">
+            <summary>📂 全問題データ管理（編集・ソート）</summary>
+            <div class="bulk-actions">
+                <button class="btn-danger" id="bulk-delete-btn" style="font-size:11px; padding:5px 10px;" onclick="bulkDelete()">選択項目をゴミ箱へ</button>
+                <button class="btn-danger hidden" id="empty-trash-btn" style="font-size:11px; padding:5px 10px;" onclick="emptyTrash()">ゴミ箱を空にする</button>
+                <button class="btn-gray" style="font-size:11px; padding:5px 10px;" onclick="toggleTrashView()" id="trash-toggle-btn">ゴミ箱を表示</button>
+                <div style="font-size: 11px; color: #666; margin-left: auto;">※ ヘッダークリックで並び替え</div>
+            </div>
+            <div class="tabs-container" id="admin-tabs"></div>
+            <div class="admin-table-container">
+                <table id="admin-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th>
+                            <th class="sort-icon" onclick="sortQuestions('textbook')">テキスト</th>
+                            <th class="sort-icon" onclick="sortQuestions('subject')">科目</th>
+                            <th class="sort-icon" onclick="sortQuestions('field')">分野</th>
+                            <th class="sort-icon" onclick="sortQuestions('name')">問題番号</th>
+                            <th class="sort-icon" onclick="sortQuestions('nextDate')">予定復習日</th>
+                            <th class="sort-icon" onclick="sortQuestions('correctCount')">正解数</th>
+                            <th class="sort-icon" onclick="sortQuestions('incorrectCount')">誤答数</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-tbody"></tbody>
+                </table>
+            </div>
+        </details>
+    </div>
+
+    <div style="margin-top: 50px; border-top: 2px dashed #ccc; padding-top: 20px; opacity: 0.7;">
+        <details>
+            <summary>💾 バックアップと復元（データ消失対策）</summary>
+            <div class="card" style="background: #fdfdfd;">
+                <p style="font-size: 12px; color: #666;">データをJSON形式でバックアップ・復元できます。</p>
+                <textarea id="io-area" rows="4" placeholder="ここにJSONデータが表示/入力されます" style="font-family: monospace; font-size: 10px;"></textarea>
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <button class="btn-primary" style="font-size:11px;" onclick="exportData()">バックアップをコピー</button>
+                    <button class="btn-danger" style="font-size:11px;" onclick="importData()">データを復元</button>
+                    <button class="btn-danger" style="font-size:11px; margin-left: auto; background-color:#c0392b;" onclick="clearAllData()">データをすべて消去</button>
+                </div>
+            </div>
+        </details>
+    </div>
+</div>
+
+<div id="edit-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2 style="color:var(--warning); border-bottom:2px solid var(--warning); padding-bottom:8px; margin-bottom:15px;">📋 問題データの編集</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>問題番号 / ラベル (name)</label>
+                <input type="text" id="edit-q-name">
+            </div>
+            <div class="form-group">
+                <label>科目 (subject)</label>
+                <input type="text" id="edit-q-subject" list="edit-subjects-dl">
+                <datalist id="edit-subjects-dl"></datalist>
+            </div>
+            <div class="form-group">
+                <label>分野 (field)</label>
+                <input type="text" id="edit-q-field" list="edit-fields-dl">
+                <datalist id="edit-fields-dl"></datalist>
+            </div>
+            <div class="form-group">
+                <label>テキスト名 (textbook)</label>
+                <input type="text" id="edit-q-textbook" list="edit-textbooks-dl">
+                <datalist id="edit-textbooks-dl"></datalist>
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>メモ (解説や補足など)</label>
+            <textarea id="edit-q-memo" rows="4"></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button class="btn-gray" onclick="closeEditModal()">キャンセル</button>
+            <button class="btn-warning" onclick="updateQuestionFromModal()">変更を更新する (除外解除)</button>
+        </div>
+        <input type="hidden" id="edit-modal-id" value="">
+    </div>
+</div>
+
+<script>
+    const STORAGE_KEY = 'forgot_manager';
+    let questions = [];
+    let trash = []; 
+    let globalNotes = { zaikei: '', kankei: '' };
+    let lastUpdatedAt = 0;
+    let currentSort = { key: 'nextDate', asc: true };
+    let showingTrash = false;
+    const MAX_DAILY_TASKS = 15; 
+
+    let currentOverdueTab = 'ALL';
+    let currentTodayTab = 'ALL';
+    let currentAdminTab = 'ALL';
+
+    let isSyncing = false;
+
+    window.onload = async () => {
+        loadFromLocalStorage();
+        
+        document.getElementById('q-subject').value = localStorage.getItem('last_subject') || '';
+        document.getElementById('q-field').value = localStorage.getItem('last_field') || '';
+        document.getElementById('q-textbook').value = localStorage.getItem('last_textbook') || '';
+        document.getElementById('note-zaikei').value = globalNotes.zaikei;
+        document.getElementById('note-kankei').value = globalNotes.kankei;
+        
+        // クラウド設定の読み込み
+        document.getElementById('sync-token').value = localStorage.getItem('sync_github_token') || '';
+        document.getElementById('sync-gist-id').value = localStorage.getItem('sync_gist_id') || '';
+        
+        refreshUI();
+
+        document.getElementById('q-subject').addEventListener('input', () => updateFieldsDatalist(false));
+        document.getElementById('q-field').addEventListener('focus', () => updateFieldsDatalist(false));
+        document.getElementById('edit-q-subject').addEventListener('input', () => updateFieldsDatalist(true));
+        document.getElementById('edit-q-field').addEventListener('focus', () => updateFieldsDatalist(true));
+
+        // 起動時に自動クラウド同期を試みる
+        if (getSyncSettings().token && getSyncSettings().gistId) {
+            updateSyncStatus("🔄 自動同期中...", "#f39c12");
+            await syncWithCloud();
+        }
+    };
+
+    function loadFromLocalStorage() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                questions = data.questions || [];
+                trash = data.trash || [];
+                globalNotes = data.globalNotes || { zaikei: '', kankei: '' };
+                lastUpdatedAt = data.lastUpdatedAt || 0;
+                
+                // データ構造のクレンジング
+                const sanitize = (q) => {
+                    if (q.field === undefined && q.subject !== undefined) {
+                        q.field = q.subject; q.subject = '未分類';
+                    }
+                    if (q.isSuspended === undefined) q.isSuspended = false;
+                    return q;
+                };
+                questions = questions.map(sanitize);
+                trash = trash.map(sanitize);
+            } catch (e) { console.error("LocalStorage読込失敗", e); }
+        }
+    }
+
+    function persist(skipCloud = false) {
+        lastUpdatedAt = Date.now();
+        const data = { questions, trash, globalNotes, lastUpdatedAt };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        localStorage.setItem('last_subject', document.getElementById('q-subject').value);
+        localStorage.setItem('last_field', document.getElementById('q-field').value);
+        localStorage.setItem('last_textbook', document.getElementById('q-textbook').value);
+
+        if (!skipCloud) {
+            // バックグラウンドでクラウドへ自動アップロード
+            syncWithCloud();
+        }
+    }
+
+    function getSyncSettings() {
+        return {
+            token: document.getElementById('sync-token').value.trim(),
+            gistId: document.getElementById('sync-gist-id').value.trim()
+        };
+    }
+
+    function saveSyncSettings() {
+        const settings = getSyncSettings();
+        localStorage.setItem('sync_github_token', settings.token);
+        localStorage.setItem('sync_gist_id', settings.gistId);
+        if (!settings.token || !settings.gistId) {
+            updateSyncStatus("未設定 (ローカル保存)", "#2c3e50");
+        } else {
+            updateSyncStatus("設定保存済 (未同期)", "#7f8c8d");
+        }
+    }
+
+    function updateSyncStatus(text, color) {
+        const statusEl = document.getElementById('sync-status');
+        if (statusEl) {
+            statusEl.innerText = text;
+            statusEl.style.color = color;
+            statusEl.style.borderColor = color;
+        }
+    }
+
+    // 双方向同期メイン処理
+    async function syncWithCloud() {
+        if (isSyncing) return;
+        const { token, gistId } = getSyncSettings();
+        if (!token || !gistId) return;
+
+        isSyncing = true;
+        try {
+            // 1. クラウドデータの取得
+            const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+                headers: { 'Authorization': `token ${token}` }
+            });
+
+            if (!res.ok) throw new Error("クラウドとの接続に失敗しました。");
+            const gistData = await res.json();
+            const file = gistData.files['forgot_manager_data.json'];
+
+            let cloudData = null;
+            if (file && file.content) {
+                cloudData = JSON.parse(file.content);
+            }
+
+            // 2. 更新日時の比較による同期ロジック
+            if (!cloudData || !cloudData.lastUpdatedAt || lastUpdatedAt > cloudData.lastUpdatedAt) {
+                // ローカルの方が新しい、またはクラウドが空っぽ → クラウドへアップロード
+                updateSyncStatus("📤 クラウドへ保存中...", "#3498db");
+                await uploadToCloud(token, gistId);
+                updateSyncStatus("☁️ 同期済み", "#27ae60");
+            } else if (cloudData.lastUpdatedAt > lastUpdatedAt) {
+                // クラウドの方が新しい → クラウドからダウンロードして上書き
+                updateSyncStatus("📥 最新データを読込中...", "#9b59b6");
+                questions = cloudData.questions || [];
+                trash = cloudData.trash || [];
+                globalNotes = cloudData.globalNotes || { zaikei: '', kankei: '' };
+                lastUpdatedAt = cloudData.lastUpdatedAt;
+                
+                persist(true); // クラウドへのループ送信を防ぐためtrue
+                refreshUI();
+                
+                document.getElementById('note-zaikei').value = globalNotes.zaikei || '';
+                document.getElementById('note-kankei').value = globalNotes.kankei || '';
+                updateSyncStatus("☁️ 同期済み (最新読込完了)", "#27ae60");
+            } else {
+                // 日時が完全に一致 → 同期不要
+                updateSyncStatus("☁️ 同期済み", "#27ae60");
+            }
+        } catch (e) {
+            console.error(e);
+            updateSyncStatus("❌ 同期エラー", "#e74c3c");
+        } finally {
+            isSyncing = false;
+        }
+    }
+
+    async function uploadToCloud(token, gistId) {
+        const localData = { questions, trash, globalNotes, lastUpdatedAt };
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                files: {
+                    'forgot_manager_data.json': {
+                        content: JSON.stringify(localData)
+                    }
+                }
+            })
+        });
+        if (!res.ok) throw new Error("アップロード失敗");
+    }
+
+    async function manualSync() {
+        const { token, gistId } = getSyncSettings();
+        if (!token || !gistId) {
+            alert("トークンとGist IDを入力してください。");
+            return;
+        }
+        updateSyncStatus("🔄 手動同期中...", "#f39c12");
+        await syncWithCloud();
+        alert("同期処理が完了しました（ステータス表示をご確認ください）。");
+    }
+
+    async function testCloudConnection() {
+        const { token, gistId } = getSyncSettings();
+        if (!token || !gistId) {
+            alert("トークンとGist IDを入力してください。");
+            return;
+        }
+        try {
+            const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+                headers: { 'Authorization': `token ${token}` }
+            });
+            if (res.ok) {
+                alert("🔍 接続テスト成功！正常にGitHubと通信できています。");
+            } else {
+                alert(`❌ 接続失敗。ステータスコード: ${res.status}\nトークンやGist IDが正しいか確認してください。`);
+            }
+        } catch (e) {
+            alert("❌ 接続エラー: 通信に失敗しました。ネット環境を確認してください。");
+        }
+    }
+
+    function saveNotes() {
+        globalNotes.zaikei = document.getElementById('note-zaikei').value;
+        globalNotes.kankei = document.getElementById('note-kankei').value;
+        persist();
+    }
+
+    function getToday() {
+        const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime();
+    }
+
+    function smoothFutureSchedule() {
+        const today = getToday();
+        const tomorrow = today + (24 * 60 * 60 * 1000);
+        const dayMs = 24 * 60 * 60 * 1000;
+        let currentDate = tomorrow;
+        let tasksChanged = false;
+        let loopCount = 0;
+
+        while (loopCount < 1000) {
+            let tasksOnDate = questions.filter(q => q.nextDate === currentDate && !q.isSuspended);
+            if (tasksOnDate.length > MAX_DAILY_TASKS) {
+                tasksOnDate.sort((a, b) => {
+                    if (a.streak !== b.streak) return a.streak - b.streak;
+                    return b.incorrectCount - a.incorrectCount;
+                });
+                const nextDay = currentDate + dayMs;
+                for (let i = MAX_DAILY_TASKS; i < tasksOnDate.length; i++) {
+                    tasksOnDate[i].nextDate = nextDay;
+                    tasksChanged = true;
+                }
+            }
+            currentDate += dayMs; loopCount++;
+            const remainingFutureTasks = questions.filter(q => q.nextDate >= currentDate && !q.isSuspended);
+            if (remainingFutureTasks.length === 0) break;
+        }
+        if (tasksChanged) persist();
+    }
+
+    function parseRange(input) {
+        const match = input.match(/^(.*?)(\d+)\s*[~〜]\s*(?:.*?)(\d+)$/);
+        if (match) {
+            const prefix = match[1];
+            const start = parseInt(match[2], 10);
+            const end = parseInt(match[3], 10);
+            if (start <= end) {
+                const count = end - start + 1;
+                if (count > 25) return { error: "一度に登録できる問題数は最大25件までです。" };
+                const names = [];
+                for (let i = start; i <= end; i++) names.push(prefix + i);
+                return names;
+            }
+        }
+        return [input];
+    }
+
+    function saveQuestion() {
+        const nameInput = document.getElementById('q-name').value.trim();
+        const subject = document.getElementById('q-subject').value.trim();
+        const field = document.getElementById('q-field').value.trim();
+        const textbook = document.getElementById('q-textbook').value.trim();
+        const memo = document.getElementById('q-memo').value.trim();
+
+        if (!nameInput || !subject || !field || !textbook) {
+            alert("問題番号、科目、分野、テキスト名は必須です。"); return;
+        }
+        const names = parseRange(nameInput);
+        if (names.error) { alert(names.error); return; }
+
+        let addedCount = 0;
+        names.forEach((name, index) => {
+            const isDuplicate = questions.some(q => q.name === name && q.subject === subject && q.field === field && q.textbook === textbook);
+            if (isDuplicate) return;
+
+            questions.push({
+                id: Date.now().toString() + '-' + index + '-' + Math.random().toString(36).substr(2, 5),
+                name: name, subject: subject, field: field, textbook: textbook, memo: memo,
+                streak: 0, everCorrect: false, correctCount: 0, incorrectCount: 0,
+                nextDate: getToday(), createdAt: Date.now(), isSuspended: false
+            });
+            addedCount++;
+        });
+
+        if (addedCount > 0) {
+            persist(); resetForm(); refreshUI();
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('q-name').value = '';
+        document.getElementById('q-memo').value = '';
+        updateFieldsDatalist(false);
+    }
+
+    function editQuestion(id) {
+        const q = questions.find(q => q.id === id); if (!q) return;
+        document.getElementById('edit-q-name').value = q.name;
+        document.getElementById('edit-q-subject').value = q.subject || '';
+        document.getElementById('edit-q-field').value = q.field || '';
+        document.getElementById('edit-q-textbook').value = q.textbook;
+        document.getElementById('edit-q-memo').value = q.memo;
+        document.getElementById('edit-modal-id').value = q.id;
+        updateFieldsDatalist(true);
+        document.getElementById('edit-modal').classList.remove('hidden');
+    }
+
+    function updateQuestionFromModal() {
+        const id = document.getElementById('edit-modal-id').value;
+        const name = document.getElementById('edit-q-name').value.trim();
+        const subject = document.getElementById('edit-q-subject').value.trim();
+        const field = document.getElementById('edit-q-field').value.trim();
+        const textbook = document.getElementById('edit-q-textbook').value.trim();
+        const memo = document.getElementById('edit-q-memo').value.trim();
+
+        if (!name || !subject || !field || !textbook) { alert("必須項目を埋めてください。"); return; }
+        const index = questions.findIndex(q => q.id === id);
+        if (index !== -1) {
+            questions[index].name = name; questions[index].subject = subject;
+            questions[index].field = field; questions[index].textbook = textbook; questions[index].memo = memo;
+            if (questions[index].isSuspended) {
+                questions[index].isSuspended = false;
+                if (questions[index].nextDate < getToday()) questions[index].nextDate = getToday();
+            }
+        }
+        persist(); closeEditModal(); refreshUI();
+    }
+
+    function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+    function handleAnswer(id, isCorrect) {
+        const index = questions.findIndex(q => q.id === id); if (index === -1) return;
+        const q = questions[index];
+        const today = getToday();
+        let daysToAdd = 0;
+        
+        if (isCorrect) {
+            q.correctCount++; q.streak++; q.everCorrect = true;
+            if (q.streak === 1) daysToAdd = 7;
+            else if (q.streak === 2) daysToAdd = 30;
+            else daysToAdd = 60;
+        } else {
+            q.incorrectCount++; q.streak = 0;
+            daysToAdd = q.everCorrect ? 7 : 3;
+        }
+        q.nextDate = today + (daysToAdd * 24 * 60 * 60 * 1000);
+        persist(); refreshUI();
+    }
+
+    function suspendQuestion(id) {
+        if (!confirm("復習スケジュールから「除外」しますか？")) return;
+        const q = questions.find(q => q.id === id);
+        if (q) { q.isSuspended = true; persist(); refreshUI(); }
+    }
+
+    function suspendOverdueExceptWeak() {
+        const today = getToday();
+        const targetQuestions = questions.filter(q => !q.isSuspended && q.nextDate < today && q.incorrectCount <= 3);
+        if (targetQuestions.length === 0) return;
+        if (!confirm(`期限超過のうち、苦手（誤答4回以上）ではない ${targetQuestions.length} 件をスケジュールから「除外」しますか？`)) return;
+        targetQuestions.forEach(q => { q.isSuspended = true; });
+        persist(); refreshUI();
+    }
+
+    function refreshUI() {
+        smoothFutureSchedule();
+        const today = getToday();
+        const tomorrow = today + (24 * 60 * 60 * 1000);
+        const activeQuestions = questions.filter(q => !q.isSuspended);
+        const allSorted = [...activeQuestions].sort((a,b) => a.nextDate - b.nextDate);
+        
+        const overdue = allSorted.filter(q => q.nextDate < today);
+        const todayTasks = allSorted.filter(q => q.nextDate === today);
+        const tomorrowTasks = allSorted.filter(q => q.nextDate === tomorrow);
+        
+        document.getElementById('overdue-total').innerText = overdue.length;
+        document.getElementById('today-total').innerText = todayTasks.length;
+        document.getElementById('tomorrow-total').innerText = tomorrowTasks.length;
+
+        const overdueExceptWeak = overdue.filter(q => q.incorrectCount <= 3);
+        const suspendBtn = document.getElementById('suspend-overdue-btn');
+        if (suspendBtn) {
+            if (overdueExceptWeak.length > 0) {
+                suspendBtn.style.display = 'inline-block';
+                suspendBtn.innerText = `一括除外(苦手以外 ${overdueExceptWeak.length}件)`;
+            } else { suspendBtn.style.display = 'none'; }
+        }
+        
+        renderTabs(overdue, 'overdue-tabs', currentOverdueTab, 'switchOverdueTab');
+        const filteredOverdue = currentOverdueTab === 'ALL' ? overdue : overdue.filter(q => (q.subject || "未分類") === currentOverdueTab);
+        renderStudyList('overdue-container', filteredOverdue);
+        
+        renderTabs(todayTasks, 'today-tabs', currentTodayTab, 'switchTodayTab');
+        const filteredTodayTasks = currentTodayTab === 'ALL' ? todayTasks : todayTasks.filter(q => (q.subject || "未分類") === currentTodayTab);
+        renderStudyList('today-container', filteredTodayTasks);
+        
+        renderTomorrowList(tomorrowTasks);
+        renderAdminTable();
+        updateDatalists();
+    }
+
+    function renderTabs(tasks, containerId, currentActiveTab, switchFunctionName) {
+        const tabsContainer = document.getElementById(containerId);
+        if (tasks.length === 0) { tabsContainer.innerHTML = ''; return; }
+        const subjects = [...new Set(tasks.map(q => q.subject || "未分類"))].sort();
+        let html = `<button class="tab-btn ${currentActiveTab === 'ALL' ? 'active' : ''}" onclick="${switchFunctionName}('ALL')">すべて<span class="tab-count">${tasks.length}</span></button>`;
+        subjects.forEach(sub => {
+            const count = tasks.filter(q => (q.subject || "未分類") === sub).length;
+            html += `<button class="tab-btn ${currentActiveTab === sub ? 'active' : ''}" onclick="${switchFunctionName}('${sub}')">${sub}<span class="tab-count">${count}</span></button>`;
+        });
+        tabsContainer.innerHTML = html;
+    }
+
+    function switchOverdueTab(subject) { currentOverdueTab = subject; refreshUI(); }
+    function switchTodayTab(subject) { currentTodayTab = subject; refreshUI(); }
+    function switchAdminTab(subject) { currentAdminTab = subject; renderAdminTable(); }
+
+    function getConditionalClass(q) {
+        if (!q) return '';
+        const targetText = `${q.subject || ''} ${q.field || ''} ${q.textbook || ''}`;
+        if (targetText.includes('財務') || targetText.includes('財計')) return 'bg-zaikei';
+        if (targetText.includes('管理') || targetText.includes('管計')) return 'bg-kankei';
+        if (targetText.includes('租税')) return 'bg-sozei';
+        if (targetText.includes('経営')) return 'bg-keiei';
+        return '';
+    }
+
+    function renderStudyList(containerId, list) {
+        const container = document.getElementById(containerId);
+        if (list.length === 0) { container.innerHTML = '<p style="color:#999; padding:10px;">取り組むべき問題はありません。</p>'; return; }
+        container.innerHTML = '';
+        
+        const grouped = list.reduce((acc, q) => {
+            const f = q.field || "未分類"; if (!acc[f]) acc[f] = []; acc[f].push(q); return acc;
+        }, {});
+        
+        for (const field in grouped) {
+            const sec = document.createElement('div'); sec.className = 'field-group';
+            sec.innerHTML = `<div class="field-header"><span>${field}</span><span class="badge" style="background:var(--primary)">${grouped[field].length}</span></div>`;
+            
+            grouped[field].forEach(q => {
+                const div = document.createElement('div'); div.className = `problem-item ${getConditionalClass(q)}`;
+                div.innerHTML = `
+                    <div class="problem-meta">${q.textbook} | ${q.subject} | 正解: ${q.correctCount} / 誤答: ${q.incorrectCount}</div>
+                    <div class="problem-name">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark">⚠️苦手</span>' : ''}</div>
+                    ${q.memo ? `<div class="memo-box">${q.memo.replace(/\n/g,'<br>')}</div>` : ''}
+                    <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+                        <button class="btn-success" onclick="handleAnswer('${q.id}', true)">正解</button>
+                        <button class="btn-danger" onclick="handleAnswer('${q.id}', false)">不正解</button>
+                        <button class="btn-gray" style="font-size:11px; padding:6px 10px; margin-left:auto;" onclick="suspendQuestion('${q.id}')">除外</button>
+                    </div>`;
+                sec.appendChild(div);
+            });
+            container.appendChild(sec);
+        }
+    }
+
+    function renderTomorrowList(list) {
+        const container = document.getElementById('tomorrow-container');
+        if (list.length === 0) { container.innerHTML = '<p style="color:#999; font-size:12px;">明日の予定はありません。</p>'; return; }
+        container.innerHTML = '';
+        list.forEach(q => {
+            const div = document.createElement('div'); div.className = 'sidebar-item';
+            div.innerHTML = `・<strong>${q.name}</strong> <span style="color:#888;">[${q.subject} > ${q.field}]</span>`;
+            container.appendChild(div);
+        });
+    }
+
+    function renderAdminTable() {
+        const tbody = document.getElementById('admin-tbody'); tbody.innerHTML = '';
+        const source = showingTrash ? trash : questions;
+        renderTabs(source, 'admin-tabs', currentAdminTab, 'switchAdminTab');
+        const filteredSource = currentAdminTab === 'ALL' ? source : source.filter(q => (q.subject || "未分類") === currentAdminTab);
+
+        const checkMatch = (q, text) => {
+            const txt = `${q.subject || ''} ${q.field || ''} ${q.textbook || ''}`; return txt.includes(text);
+        };
+        const zaikei = filteredSource.filter(q => checkMatch(q, '財務') || checkMatch(q, '財計'));
+        const kankei = filteredSource.filter(q => checkMatch(q, '管理') || checkMatch(q, '管計'));
+        const sozei = filteredSource.filter(q => checkMatch(q, '租税'));
+        const keiei = filteredSource.filter(q => checkMatch(q, '経営'));
+        const others = filteredSource.filter(q => !checkMatch(q, '財務') && !checkMatch(q, '財計') && !checkMatch(q, '管理') && !checkMatch(q, '管計') && !checkMatch(q, '租税') && !checkMatch(q, '経営'));
+        
+        const sortFn = (a, b) => {
+            if (a.isSuspended !== b.isSuspended) return a.isSuspended ? 1 : -1;
+            let vA = a[currentSort.key]; let vB = b[currentSort.key];
+            if (typeof vA === 'string') return currentSort.asc ? vA.localeCompare(vB, 'ja') : vB.localeCompare(vA, 'ja');
+            return currentSort.asc ? (vA || 0) - (vB || 0) : (vB || 0) - (vA || 0);
+        };
+        
+        [{ label: '--- 財務会計系 ---', data: zaikei.sort(sortFn) },
+         { label: '--- 管理会計系 ---', data: kankei.sort(sortFn) },
+         { label: '--- 租税法 ---', data: sozei.sort(sortFn) },
+         { label: '--- 経営学 ---', data: keiei.sort(sortFn) },
+         { label: '--- その他 ---', data: others.sort(sortFn) }].forEach(group => {
+            if (group.data.length > 0) {
+                const sep = document.createElement('tr');
+                sep.innerHTML = `<td colspan="9" style="background:#eee; font-weight:bold; text-align:center; padding:2px; font-size:10px;">${group.label}</td>`;
+                tbody.appendChild(sep);
+                group.data.forEach(q => {
+                    const row = document.createElement('tr'); row.className = getConditionalClass(q);
+                    const dateDisplay = q.isSuspended ? '<span class="badge badge-suspended">⏸️ 除外中</span>' : new Date(q.nextDate).toLocaleDateString();
+                    const dateStyle = (!q.isSuspended && q.nextDate < getToday()) ? 'color:red;font-weight:bold;' : '';
+
+                    row.innerHTML = `
+                        <td><input type="checkbox" class="admin-checkbox" data-id="${q.id}"></td>
+                        <td>${q.textbook}</td><td>${q.subject || '未分類'}</td><td>${q.field || '未分類'}</td>
+                        <td style="font-weight:bold;">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark" style="font-size:9px;">苦手</span>' : ''}</td>
+                        <td style="${dateStyle}">${dateDisplay}</td><td>${q.correctCount}</td><td>${q.incorrectCount}</td>
+                        <td>
+                            ${showingTrash ? 
+                                `<button class="btn-success" style="font-size:10px; padding:4px 8px;" onclick="restoreQuestion('${q.id}')">復元</button> <button class="btn-danger" style="font-size:10px; padding:4px 8px;" onclick="permanentlyDelete('${q.id}')">完全削除</button>` : 
+                                `<button class="btn-primary" style="font-size:10px; padding:4px 8px;" onclick="editQuestion('${q.id}')">編集</button> <button class="btn-danger" style="font-size:10px; padding:4px 8px;" onclick="deleteQuestion('${q.id}')">削除</button>`}
+                        </td>`;
+                    tbody.appendChild(row);
+                });
+            }
+        });
+    }
+
+    function sortQuestions(key) {
+        if (currentSort.key === key) currentSort.asc = !currentSort.asc;
+        else { currentSort.key = key; currentSort.asc = true; }
+        renderAdminTable();
+    }
+
+    function deleteQuestion(id) {
+        const idx = questions.findIndex(q => q.id === id);
+        if (idx !== -1) { trash.push(questions[idx]); questions.splice(idx, 1); persist(); refreshUI(); }
+    }
+
+    function restoreQuestion(id) {
+        const idx = trash.findIndex(q => q.id === id);
+        if (idx !== -1) { questions.push(trash[idx]); trash.splice(idx, 1); persist(); refreshUI(); }
+    }
+
+    function permanentlyDelete(id) {
+        if (!confirm("完全に削除しますか？")) return;
+        trash = trash.filter(q => q.id !== id); persist(); refreshUI();
+    }
+
+    function emptyTrash() {
+        if (trash.length === 0 || !confirm(`ゴミ箱の ${trash.length} 件を空にしますか？`)) return;
+        trash = []; persist(); refreshUI();
+    }
+
+    function bulkDelete() {
+        const checkboxes = document.querySelectorAll('.admin-checkbox:checked'); if (checkboxes.length === 0) return;
+        const ids = Array.from(checkboxes).map(cb => cb.dataset.id);
+        if (showingTrash) {
+            if (confirm("選択項目を完全に削除しますか？")) trash = trash.filter(q => !ids.includes(q.id));
+        } else {
+            trash.push(...questions.filter(q => ids.includes(q.id))); questions = questions.filter(q => !ids.includes(q.id));
+        }
+        persist(); refreshUI(); document.getElementById('select-all').checked = false;
+    }
+
+    function toggleSelectAll() {
+        const isChecked = document.getElementById('select-all').checked;
+        document.querySelectorAll('.admin-checkbox').forEach(cb => cb.checked = isChecked);
+    }
+
+    function toggleTrashView() {
+        showingTrash = !showingTrash;
+        const toggleBtn = document.getElementById('trash-toggle-btn');
+        const bulkBtn = document.getElementById('bulk-delete-btn');
+        const emptyBtn = document.getElementById('empty-trash-btn');
+        if (showingTrash) {
+            toggleBtn.innerText = "通常画面に戻る"; bulkBtn.innerText = "選択項目を完全に削除"; emptyBtn.classList.remove('hidden');
+        } else {
+            toggleBtn.innerText = "ゴミ箱を表示"; bulkBtn.innerText = "選択項目をゴミ箱へ"; emptyBtn.classList.add('hidden');
+        }
+        renderAdminTable();
+    }
+
+    function updateDatalists() {
+        const allData = [...questions, ...trash];
+        const textbooks = [...new Set(allData.map(q => q.textbook || ""))].filter(Boolean);
+        const subjects = [...new Set(allData.map(q => q.subject || ""))].filter(Boolean);
+        document.getElementById('textbooks-dl').innerHTML = textbooks.map(t => `<option value="${t}">`).join('');
+        document.getElementById('subjects-dl').innerHTML = subjects.map(s => `<option value="${s}">`).join('');
+    }
+
+    function updateFieldsDatalist(isModal = false) {
+        const allData = [...questions, ...trash];
+        const inputId = isModal ? 'edit-q-subject' : 'q-subject';
+        const dlId = isModal ? 'edit-fields-dl' : 'fields-dl';
+        const currentSubject = document.getElementById(inputId).value.trim();
+        
+        if (currentSubject) {
+            const filteredData = allData.filter(q => q.subject === currentSubject);
+            const fields = [...new Set(filteredData.map(q => q.field || ""))].filter(Boolean);
+            document.getElementById(dlId).innerHTML = fields.map(f => `<option value="${f}">`).join('');
+        } else {
+            document.getElementById(dlId).innerHTML = '';
+        }
+    }
+
+    function exportData() {
+        const area = document.getElementById('io-area');
+        area.value = JSON.stringify({ questions, trash, globalNotes, lastUpdatedAt });
+        area.select(); document.execCommand('copy'); alert("バックアップをコピーしました。");
+    }
+
+    function importData() {
+        const area = document.getElementById('io-area');
+        try {
+            const data = JSON.parse(area.value);
+            if (confirm("上書きしますか？")) {
+                questions = data.questions || []; trash = data.trash || [];
+                globalNotes = data.globalNotes || { zaikei: '', kankei: '' };
+                lastUpdatedAt = data.lastUpdatedAt || Date.now();
+                persist(); refreshUI(); alert("復元完了。");
+            }
+        } catch (e) { alert("形式エラー"); }
+    }
+
+    function clearAllData() {
+        if (!confirm("全データ消去しますか？") || !confirm("本当に消去しますか？")) return;
+        if (prompt("「DELETE」と入力してください。") === "DELETE") {
+            questions = []; trash = []; globalNotes = { zaikei: '', kankei: '' }; lastUpdatedAt = Date.now();
+            localStorage.clear(); refreshUI(); alert("消去完了。");
+        }
+    }
+</script>
+</body>
+</html>
