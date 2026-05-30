@@ -8,10 +8,9 @@
         :root {
             --primary: #3498db;
             --secondary: #2c3e50;
-            --success: #27ae60;
+            --warning: #e67e22;
             --danger: #e74c3c;
-            --warning: #f39c12;
-            --bg: #f8f9fa;
+            --success: #2ecc71;
             --text: #333;
             --color-zaikei: #ffebee;
             --color-kankei: #fff3e0;
@@ -19,105 +18,23 @@
             --color-keiei: #e8f5e9; 
         }
 
-        body {
-            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            font-size: 14px;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f6fa; color: var(--text); padding: 20px; line-height: 1.5; }
+        .container { max-width: 1200px; margin: auto; }
+        h1 { font-size: 24px; color: var(--secondary); margin-bottom: 20px; text-align: center; }
+        h2 { font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        h1, h2, h3 {
-            margin-top: 0;
-            color: var(--secondary);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        input, textarea, select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        button {
-            cursor: pointer;
-            border: none;
-            border-radius: 4px;
-            padding: 10px 15px;
-            font-weight: bold;
-            transition: opacity 0.2s;
-        }
-
-        button:hover { opacity: 0.8; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn-gray { background: #95a5a6; color: white; }
-
-        .study-grid {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 20px;
-        }
-
-        .task-list-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .badge {
-            background: var(--secondary);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 12px;
-        }
-
-        .badge-suspended {
-            background: #7f8c8d;
-            font-size: 10px;
-        }
-
-        .problem-item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            background: #fff;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
+        .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 200px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 12px; color: #555; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        button { cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; }
+        .btn-danger { background: var(--danger); color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; }
+        .btn-success { background: var(--success); color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; }
+        .btn-warning { background: var(--warning); color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; }
+        .btn-gray { background: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; }
 
         .bg-zaikei { background-color: var(--color-zaikei) !important; }
         .bg-kankei { background-color: var(--color-kankei) !important; }
@@ -128,174 +45,60 @@
         .text-sozei { color: #8e44ad !important; }
         .text-keiei { color: #27ae60 !important; }
 
-        .problem-meta {
-            font-size: 11px;
-            color: #7f8c8d;
-        }
+        .problem-meta { font-size: 11px; color: #7f8c8d; margin-bottom: 4px; }
+        .problem-name { font-weight: bold; font-size: 15px; margin-bottom: 4px; }
+        .memo-box { background: #fff9c4; padding: 8px; font-size: 12px; margin-top: 5px; border-radius: 4px; border-left: 3px solid #f1c40f; }
 
-        .problem-name {
-            font-size: 16px;
-            font-weight: bold;
-            margin: 5px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .nigete-mark {
-            background: var(--danger);
-            color: white;
-            font-size: 10px;
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-weight: bold;
-        }
-
-        .memo-box {
-            background: #fff9c4;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            font-size: 13px;
-            border-left: 4px solid #f1c40f;
-        }
-
-        .admin-table-container {
-            overflow-x: auto;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 11.5px;
-        }
-
-        th {
-            background: #f1f1f1;
-            padding: 8px;
-            text-align: left;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th { background: #ecf0f1; padding: 8px; text-align: left; cursor: pointer; border-bottom: 2px solid #bdc3c7; user-select: none; }
         th:hover { background: #e0e0e0; }
         td { padding: 4px 8px; border-bottom: 1px solid #eee; }
         .sort-icon::after { content: " ↕"; opacity: 0.3; font-size: 10px; }
 
-        details summary {
-            cursor: pointer;
-            padding: 12px;
-            background: #eee;
-            border-radius: 6px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            user-select: none;
-        }
-
         .hidden { display: none !important; }
+        
+        .sidebar-item { font-size: 12px; padding: 5px; border-bottom: 1px dashed #eee; }
+        .field-group { margin-bottom: 25px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+        .field-header { background: #ecf0f1; padding: 8px 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .problem-item { padding: 12px; border-top: 1px solid #eee; }
 
-        .sidebar-item {
-            font-size: 12px;
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            background: white;
-            border-radius: 4px;
-            margin-bottom: 5px;
-        }
+        .badge { padding: 2px 6px; border-radius: 10px; font-size: 11px; color: white; display: inline-block; }
+        .badge-suspended { background: #e74c3c; }
+        .nigete-mark { background: #ff4757; color: white; padding: 2px 4px; border-radius: 4px; margin-left: 5px; font-size: 10px; }
 
-        .field-group { margin-bottom: 25px; }
-        .field-header {
-            background: #ecf0f1;
-            padding: 6px 12px;
-            font-weight: bold;
-            color: var(--primary);
-            border-radius: 4px;
-            margin-bottom: 10px;
-            border-left: 5px solid var(--primary);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .bulk-actions {
-            margin-bottom: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .tabs-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 5px;
-        }
-
-        .tab-btn {
-            background: #e0e0e0;
-            color: #555;
-            padding: 6px 12px;
-            font-size: 12px;
-            border-radius: 4px 4px 0 0;
-            font-weight: bold;
-            border: none;
-        }
-
+        .tabs-container { display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
+        .tab-btn { background: #ecf0f1; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; transition: 0.2s; }
+        .tab-btn:hover { background: #bdc3c7; }
         .tab-btn.active { background: var(--primary); color: white; }
-        .tab-btn .tab-count {
-            background: rgba(0,0,0,0.15);
-            color: inherit;
-            padding: 1px 5px;
-            border-radius: 8px;
-            font-size: 10px;
-            margin-left: 5px;
-        }
+        .tab-btn .tab-count { background: rgba(0,0,0,0.15); color: inherit; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 5px; font-weight: bold; }
         .tab-btn.active .tab-count { background: rgba(255,255,255,0.3); }
+        
+        /* 👇 ドラッグ中のカーソル表示変更用 */
+        .tab-btn[draggable="true"] { cursor: grab; }
+        .tab-btn[draggable="true"]:active { cursor: grabbing; }
 
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-        .modal-content {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 700px;
-            box-shadow: 0 4px 25px rgba(0,0,0,0.2);
-            animation: modalFadeIn 0.2s ease-out;
-        }
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 700px; box-shadow: 0 4px 25px rgba(0,0,0,0.2); animation: modalFadeIn 0.2s ease-out; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .bulk-actions { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
 
+        .grid-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         @media (max-width: 768px) {
-            .study-grid { grid-template-columns: 1fr; }
+            .grid-layout { grid-template-columns: 1fr; }
+            .form-row { flex-direction: column; gap: 10px; }
+            .tabs-container { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 5px; }
+            .tab-btn { white-space: nowrap; }
         }
     </style>
 </head>
 <body>
-
 <div class="container">
     <h1>忘却曲線マネージャー</h1>
 
     <div class="card" style="background: #e8f4fd; border-left: 5px solid var(--primary); padding: 15px;">
         <details id="sync-details">
-            <summary style="font-weight: bold; color: var(--secondary); font-size: 15px;">
+            <summary style="font-weight: bold; color: var(--secondary); font-size: 15px; cursor: pointer;">
                 ☁️ クラウド同期設定 (PC・スマホ連動) <span id="sync-status" style="font-size:12px; margin-left:10px; color:#2c3e50; background:#fff; padding:2px 8px; border-radius:10px; border:1px solid #cbd5e1;">未設定 (ローカル保存)</span>
             </summary>
             <div style="margin-top: 15px; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
@@ -327,17 +130,17 @@
             </div>
             <div class="form-group">
                 <label>科目 (subject)</label>
-                <input type="text" id="q-subject" list="subjects-dl" placeholder="例: 財務会計論">
+                <input type="text" id="q-subject" list="subjects-dl" placeholder="例: 財務会計">
                 <datalist id="subjects-dl"></datalist>
             </div>
             <div class="form-group">
                 <label>分野 (field)</label>
-                <input type="text" id="q-field" list="fields-dl" placeholder="例: 構造論点">
+                <input type="text" id="q-field" list="fields-dl" placeholder="例: 有形固定資産">
                 <datalist id="fields-dl"></datalist>
             </div>
             <div class="form-group">
                 <label>テキスト名 (textbook)</label>
-                <input type="text" id="q-textbook" list="textbooks-dl" placeholder="テキストを選択">
+                <input type="text" id="q-textbook" list="textbooks-dl" placeholder="例: テキスト1">
                 <datalist id="textbooks-dl"></datalist>
             </div>
         </div>
@@ -350,79 +153,63 @@
         </div>
     </div>
 
-    <div class="study-grid">
-        <div class="main-content">
+    <div class="grid-layout">
+        <div>
             <div class="card">
-                <div class="task-list-title">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <h3 style="color:var(--danger); margin:0;">🚨 期限超過</h3>
-                        <button class="btn-gray" style="font-size:10px; padding:4px 8px; display:none;" onclick="suspendOverdueExceptWeak()" id="suspend-overdue-btn">一括除外</button>
-                    </div>
-                    <span class="badge" id="overdue-total">0</span>
-                </div>
+                <h2 style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>⚠️ 期限超過 / 復習が必要</span>
+                    <button id="suspend-overdue-btn" class="btn-gray" style="font-size:11px; padding:4px 8px; display:none;" onclick="suspendOverdueExceptWeak()">一括除外</button>
+                </h2>
                 <div class="tabs-container" id="overdue-tabs"></div>
                 <div id="overdue-container"></div>
             </div>
 
             <div class="card">
-                <div class="task-list-title">
-                    <h3 style="color:var(--primary); margin:0;">📅 今日やるべきもの</h3>
-                    <span class="badge" id="today-total">0</span>
-                </div>
+                <h2>📅 今日やるべき問題</h2>
                 <div class="tabs-container" id="today-tabs"></div>
                 <div id="today-container"></div>
             </div>
         </div>
 
-        <div class="sidebar">
+        <div>
             <div class="card">
-                <div class="task-list-title">
-                    <h3 style="margin:0;">🌅 明日の予定</h3>
-                    <span class="badge" id="tomorrow-total">0</span>
-                </div>
+                <h2>⏩ 明日の予定</h2>
                 <div id="tomorrow-container"></div>
             </div>
-
-            <div class="card bg-zaikei">
-                <div class="task-list-title">
-                    <h3 class="text-zaikei" style="margin:0;">📓 財務会計 メモ</h3>
-                </div>
-                <div style="font-size: 11px; color: #666; margin-bottom: 8px;">間違えた理由や弱点・気づきを記録</div>
-                <textarea id="note-zaikei" rows="6" placeholder="例: 減損会計の判定基準を間違えがち..." oninput="saveNotes()"></textarea>
-            </div>
-
-            <div class="card bg-kankei">
-                <div class="task-list-title">
-                    <h3 class="text-kankei" style="margin:0;">📓 管理会計 メモ</h3>
-                </div>
-                <div style="font-size: 11px; color: #666; margin-bottom: 8px;">間違えた理由や弱点・気づきを記録</div>
-                <textarea id="note-kankei" rows="6" placeholder="例: 直接原価計算の固定費の処理を忘れた..." oninput="saveNotes()"></textarea>
+            <div class="card">
+                <h3 class="text-zaikei" style="margin:0 0 5px 0;">📓 財務会計 メモ</h3>
+                <textarea id="note-zaikei" rows="4" placeholder="ここにメモ..." onchange="saveNotes()"></textarea>
+                <h3 class="text-kankei" style="margin:15px 0 5px 0;">📓 管理会計 メモ</h3>
+                <textarea id="note-kankei" rows="4" placeholder="ここにメモ..." onchange="saveNotes()"></textarea>
             </div>
         </div>
     </div>
 
     <div class="card">
         <details id="admin-details">
-            <summary>📂 全問題データ管理（編集・ソート）</summary>
-            <div class="bulk-actions">
+            <summary style="font-weight:bold; font-size:16px; cursor:pointer;">📂 全問題データ管理（編集・ソート）</summary>
+            
+            <div class="bulk-actions" style="margin-top:15px;">
                 <button class="btn-danger" id="bulk-delete-btn" style="font-size:11px; padding:5px 10px;" onclick="bulkDelete()">選択項目をゴミ箱へ</button>
                 <button class="btn-danger hidden" id="empty-trash-btn" style="font-size:11px; padding:5px 10px;" onclick="emptyTrash()">ゴミ箱を空にする</button>
                 <button class="btn-gray" style="font-size:11px; padding:5px 10px;" onclick="toggleTrashView()" id="trash-toggle-btn">ゴミ箱を表示</button>
                 <div style="font-size: 11px; color: #666; margin-left: auto;">※ ヘッダークリックで並び替え</div>
             </div>
+
             <div class="tabs-container" id="admin-tabs"></div>
-            <div class="admin-table-container">
+
+            <div style="overflow-x: auto;">
                 <table id="admin-table">
                     <thead>
                         <tr>
-                            <th><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th>
-                            <th class="sort-icon" onclick="sortQuestions('textbook')">テキスト</th>
-                            <th class="sort-icon" onclick="sortQuestions('subject')">科目</th>
-                            <th class="sort-icon" onclick="sortQuestions('field')">分野</th>
-                            <th class="sort-icon" onclick="sortQuestions('name')">問題番号</th>
-                            <th class="sort-icon" onclick="sortQuestions('nextDate')">予定復習日</th>
-                            <th class="sort-icon" onclick="sortQuestions('correctCount')">正解数</th>
-                            <th class="sort-icon" onclick="sortQuestions('incorrectCount')">誤答数</th>
+                            <th style="width:30px;"><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th>
+                            <th onclick="sortAdmin('textbook')" class="sort-icon">テキスト</th>
+                            <th onclick="sortAdmin('subject')" class="sort-icon">科目</th>
+                            <th onclick="sortAdmin('field')" class="sort-icon">分野</th>
+                            <th onclick="sortAdmin('name')" class="sort-icon">問題番号</th>
+                            <th onclick="sortAdmin('nextDate')" class="sort-icon">次回期日</th>
+                            <th onclick="sortAdmin('correctCount')" class="sort-icon">正解</th>
+                            <th onclick="sortAdmin('incorrectCount')" class="sort-icon">誤答</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -432,16 +219,16 @@
         </details>
     </div>
 
-    <div style="margin-top: 50px; border-top: 2px dashed #ccc; padding-top: 20px; opacity: 0.7;">
+    <div class="card">
         <details>
-            <summary>💾 バックアップと復元（データ消失対策）</summary>
-            <div class="card" style="background: #fdfdfd;">
+            <summary style="font-weight:bold; font-size:14px; cursor:pointer;">💾 バックアップと復元（データ消失対策）</summary>
+            <div style="margin-top:10px;">
                 <p style="font-size: 12px; color: #666;">データをJSON形式でバックアップ・復元できます。</p>
-                <textarea id="io-area" rows="4" placeholder="ここにJSONデータが表示/入力されます" style="font-family: monospace; font-size: 10px;"></textarea>
+                <textarea id="io-area" rows="4" placeholder="ここにJSONデータが表示/入力されます" style="font-family: monospace; font-size: 10px; width: 100%; box-sizing: border-box;"></textarea>
                 <div style="margin-top: 10px; display: flex; gap: 10px;">
                     <button class="btn-primary" style="font-size:11px;" onclick="exportData()">バックアップをコピー</button>
-                    <button class="btn-danger" style="font-size:11px;" onclick="importData()">データを復元</button>
-                    <button class="btn-danger" style="font-size:11px; margin-left: auto; background-color:#c0392b;" onclick="clearAllData()">データをすべて消去</button>
+                    <button class="btn-danger" style="font-size:11px;" onclick="importData()">復元 (上書き)</button>
+                    <button class="btn-gray" style="font-size:11px; margin-left:auto;" onclick="clearAllData()">全データ消去</button>
                 </div>
             </div>
         </details>
@@ -496,9 +283,12 @@
 
     let currentOverdueTab = 'ALL';
     let currentTodayTab = 'ALL';
-    let currentAdminTab = 'ALL';
-
+    let currentAdminTab = 'ALL'; 
     let isSyncing = false;
+
+    // 👇 追加: ドラッグ＆ドロップ用の並び順データ
+    let customSubjectOrder = [];
+    let draggedSubject = null;
 
     window.onload = async () => {
         loadFromLocalStorage();
@@ -506,10 +296,9 @@
         document.getElementById('q-subject').value = localStorage.getItem('last_subject') || '';
         document.getElementById('q-field').value = localStorage.getItem('last_field') || '';
         document.getElementById('q-textbook').value = localStorage.getItem('last_textbook') || '';
-        document.getElementById('note-zaikei').value = globalNotes.zaikei;
-        document.getElementById('note-kankei').value = globalNotes.kankei;
+        document.getElementById('note-zaikei').value = globalNotes.zaikei || '';
+        document.getElementById('note-kankei').value = globalNotes.kankei || '';
         
-        // クラウド設定の読み込み
         document.getElementById('sync-token').value = localStorage.getItem('sync_github_token') || '';
         document.getElementById('sync-gist-id').value = localStorage.getItem('sync_gist_id') || '';
         
@@ -520,7 +309,6 @@
         document.getElementById('edit-q-subject').addEventListener('input', () => updateFieldsDatalist(true));
         document.getElementById('edit-q-field').addEventListener('focus', () => updateFieldsDatalist(true));
 
-        // 起動時に自動クラウド同期を試みる
         if (getSyncSettings().token && getSyncSettings().gistId) {
             updateSyncStatus("🔄 自動同期中...", "#f39c12");
             await syncWithCloud();
@@ -536,8 +324,8 @@
                 trash = data.trash || [];
                 globalNotes = data.globalNotes || { zaikei: '', kankei: '' };
                 lastUpdatedAt = data.lastUpdatedAt || 0;
-                
-                // データ構造のクレンジング
+                customSubjectOrder = data.customSubjectOrder || []; // 👇 追加
+
                 const sanitize = (q) => {
                     if (q.field === undefined && q.subject !== undefined) {
                         q.field = q.subject; q.subject = '未分類';
@@ -553,14 +341,14 @@
 
     function persist(skipCloud = false) {
         lastUpdatedAt = Date.now();
-        const data = { questions, trash, globalNotes, lastUpdatedAt };
+        // 👇 customSubjectOrder も保存対象に含める
+        const data = { questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         localStorage.setItem('last_subject', document.getElementById('q-subject').value);
         localStorage.setItem('last_field', document.getElementById('q-field').value);
         localStorage.setItem('last_textbook', document.getElementById('q-textbook').value);
 
         if (!skipCloud) {
-            // バックグラウンドでクラウドへ自動アップロード
             syncWithCloud();
         }
     }
@@ -592,7 +380,6 @@
         }
     }
 
-    // 双方向同期メイン処理
     async function syncWithCloud() {
         if (isSyncing) return;
         const { token, gistId } = getSyncSettings();
@@ -600,7 +387,6 @@
 
         isSyncing = true;
         try {
-            // 1. クラウドデータの取得
             const res = await fetch(`https://api.github.com/gists/${gistId}`, {
                 headers: { 'Authorization': `token ${token}` }
             });
@@ -614,28 +400,25 @@
                 cloudData = JSON.parse(file.content);
             }
 
-            // 2. 更新日時の比較による同期ロジック
             if (!cloudData || !cloudData.lastUpdatedAt || lastUpdatedAt > cloudData.lastUpdatedAt) {
-                // ローカルの方が新しい、またはクラウドが空っぽ → クラウドへアップロード
                 updateSyncStatus("📤 クラウドへ保存中...", "#3498db");
                 await uploadToCloud(token, gistId);
                 updateSyncStatus("☁️ 同期済み", "#27ae60");
             } else if (cloudData.lastUpdatedAt > lastUpdatedAt) {
-                // クラウドの方が新しい → クラウドからダウンロードして上書き
                 updateSyncStatus("📥 最新データを読込中...", "#9b59b6");
                 questions = cloudData.questions || [];
                 trash = cloudData.trash || [];
                 globalNotes = cloudData.globalNotes || { zaikei: '', kankei: '' };
+                customSubjectOrder = cloudData.customSubjectOrder || []; // 👇 追加
                 lastUpdatedAt = cloudData.lastUpdatedAt;
                 
-                persist(true); // クラウドへのループ送信を防ぐためtrue
+                persist(true);
                 refreshUI();
                 
                 document.getElementById('note-zaikei').value = globalNotes.zaikei || '';
                 document.getElementById('note-kankei').value = globalNotes.kankei || '';
                 updateSyncStatus("☁️ 同期済み (最新読込完了)", "#27ae60");
             } else {
-                // 日時が完全に一致 → 同期不要
                 updateSyncStatus("☁️ 同期済み", "#27ae60");
             }
         } catch (e) {
@@ -647,7 +430,8 @@
     }
 
     async function uploadToCloud(token, gistId) {
-        const localData = { questions, trash, globalNotes, lastUpdatedAt };
+        // 👇 customSubjectOrder もアップロードに含める
+        const localData = { questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder };
         const res = await fetch(`https://api.github.com/gists/${gistId}`, {
             method: 'PATCH',
             headers: {
@@ -707,25 +491,22 @@
     }
 
     function smoothFutureSchedule() {
-        const today = getToday();
-        const tomorrow = today + (24 * 60 * 60 * 1000);
-        const dayMs = 24 * 60 * 60 * 1000;
-        let currentDate = tomorrow;
         let tasksChanged = false;
+        const today = getToday();
+        
+        let currentDate = today + (24 * 60 * 60 * 1000);
+        const dayMs = 24 * 60 * 60 * 1000;
         let loopCount = 0;
 
-        while (loopCount < 1000) {
-            let tasksOnDate = questions.filter(q => q.nextDate === currentDate && !q.isSuspended);
+        while (loopCount < 365) {
+            const tasksOnDate = questions.filter(q => q.nextDate === currentDate && !q.isSuspended);
             if (tasksOnDate.length > MAX_DAILY_TASKS) {
-                tasksOnDate.sort((a, b) => {
-                    if (a.streak !== b.streak) return a.streak - b.streak;
-                    return b.incorrectCount - a.incorrectCount;
-                });
-                const nextDay = currentDate + dayMs;
-                for (let i = MAX_DAILY_TASKS; i < tasksOnDate.length; i++) {
-                    tasksOnDate[i].nextDate = nextDay;
+                const sortedByStreak = tasksOnDate.sort((a, b) => b.streak - a.streak);
+                const overflow = sortedByStreak.slice(MAX_DAILY_TASKS);
+                overflow.forEach(q => {
+                    q.nextDate += dayMs;
                     tasksChanged = true;
-                }
+                });
             }
             currentDate += dayMs; loopCount++;
             const remainingFutureTasks = questions.filter(q => q.nextDate >= currentDate && !q.isSuspended);
@@ -753,7 +534,7 @@
 
     function saveQuestion() {
         const nameInput = document.getElementById('q-name').value.trim();
-        const subject = document.getElementById('q-subject').value.trim();
+        const subject = document.getElementById('q-subject').value.trim() || '未分類';
         const field = document.getElementById('q-field').value.trim();
         const textbook = document.getElementById('q-textbook').value.trim();
         const memo = document.getElementById('q-memo').value.trim();
@@ -761,6 +542,7 @@
         if (!nameInput || !subject || !field || !textbook) {
             alert("問題番号、科目、分野、テキスト名は必須です。"); return;
         }
+        
         const names = parseRange(nameInput);
         if (names.error) { alert(names.error); return; }
 
@@ -779,14 +561,13 @@
         });
 
         if (addedCount > 0) {
-            persist(); resetForm(); refreshUI();
+            persist(); 
+            document.getElementById('q-name').value = '';
+            document.getElementById('q-memo').value = '';
+            refreshUI();
+        } else {
+            alert(`既に登録されている問題です。`);
         }
-    }
-
-    function resetForm() {
-        document.getElementById('q-name').value = '';
-        document.getElementById('q-memo').value = '';
-        updateFieldsDatalist(false);
     }
 
     function editQuestion(id) {
@@ -811,6 +592,7 @@
 
         if (!name || !subject || !field || !textbook) { alert("必須項目を埋めてください。"); return; }
         const index = questions.findIndex(q => q.id === id);
+        
         if (index !== -1) {
             questions[index].name = name; questions[index].subject = subject;
             questions[index].field = field; questions[index].textbook = textbook; questions[index].memo = memo;
@@ -829,7 +611,7 @@
         const q = questions[index];
         const today = getToday();
         let daysToAdd = 0;
-        
+
         if (isCorrect) {
             q.correctCount++; q.streak++; q.everCorrect = true;
             if (q.streak === 1) daysToAdd = 7;
@@ -839,6 +621,7 @@
             q.incorrectCount++; q.streak = 0;
             daysToAdd = q.everCorrect ? 7 : 3;
         }
+        
         q.nextDate = today + (daysToAdd * 24 * 60 * 60 * 1000);
         persist(); refreshUI();
     }
@@ -852,7 +635,9 @@
     function suspendOverdueExceptWeak() {
         const today = getToday();
         const targetQuestions = questions.filter(q => !q.isSuspended && q.nextDate < today && q.incorrectCount <= 3);
+
         if (targetQuestions.length === 0) return;
+
         if (!confirm(`期限超過のうち、苦手（誤答4回以上）ではない ${targetQuestions.length} 件をスケジュールから「除外」しますか？`)) return;
         targetQuestions.forEach(q => { q.isSuspended = true; });
         persist(); refreshUI();
@@ -862,49 +647,126 @@
         smoothFutureSchedule();
         const today = getToday();
         const tomorrow = today + (24 * 60 * 60 * 1000);
+        
         const activeQuestions = questions.filter(q => !q.isSuspended);
         const allSorted = [...activeQuestions].sort((a,b) => a.nextDate - b.nextDate);
-        
+
         const overdue = allSorted.filter(q => q.nextDate < today);
         const todayTasks = allSorted.filter(q => q.nextDate === today);
         const tomorrowTasks = allSorted.filter(q => q.nextDate === tomorrow);
-        
-        document.getElementById('overdue-total').innerText = overdue.length;
-        document.getElementById('today-total').innerText = todayTasks.length;
-        document.getElementById('tomorrow-total').innerText = tomorrowTasks.length;
 
-        const overdueExceptWeak = overdue.filter(q => q.incorrectCount <= 3);
         const suspendBtn = document.getElementById('suspend-overdue-btn');
-        if (suspendBtn) {
+        if (overdue.length > 0) {
+            const overdueExceptWeak = overdue.filter(q => q.incorrectCount <= 3);
             if (overdueExceptWeak.length > 0) {
                 suspendBtn.style.display = 'inline-block';
                 suspendBtn.innerText = `一括除外(苦手以外 ${overdueExceptWeak.length}件)`;
             } else { suspendBtn.style.display = 'none'; }
+        } else {
+            suspendBtn.style.display = 'none';
         }
-        
+
+        const overdueSubjects = [...new Set(overdue.map(q => q.subject || "未分類"))];
+        if (currentOverdueTab !== 'ALL' && !overdueSubjects.includes(currentOverdueTab)) {
+            currentOverdueTab = 'ALL';
+        }
         renderTabs(overdue, 'overdue-tabs', currentOverdueTab, 'switchOverdueTab');
         const filteredOverdue = currentOverdueTab === 'ALL' ? overdue : overdue.filter(q => (q.subject || "未分類") === currentOverdueTab);
         renderStudyList('overdue-container', filteredOverdue);
-        
+
+        const todaySubjects = [...new Set(todayTasks.map(q => q.subject || "未分類"))];
+        if (currentTodayTab !== 'ALL' && !todaySubjects.includes(currentTodayTab)) {
+            currentTodayTab = 'ALL';
+        }
         renderTabs(todayTasks, 'today-tabs', currentTodayTab, 'switchTodayTab');
         const filteredTodayTasks = currentTodayTab === 'ALL' ? todayTasks : todayTasks.filter(q => (q.subject || "未分類") === currentTodayTab);
         renderStudyList('today-container', filteredTodayTasks);
-        
+
         renderTomorrowList(tomorrowTasks);
         renderAdminTable();
         updateDatalists();
     }
 
+    // 👇 ドラッグ＆ドロップ機能を追加して改修した renderTabs
     function renderTabs(tasks, containerId, currentActiveTab, switchFunctionName) {
         const tabsContainer = document.getElementById(containerId);
         if (tasks.length === 0) { tabsContainer.innerHTML = ''; return; }
-        const subjects = [...new Set(tasks.map(q => q.subject || "未分類"))].sort();
+
+        let subjects = [...new Set(tasks.map(q => q.subject || "未分類"))];
+
+        // 新しく登場した科目を customSubjectOrder に追加
+        subjects.forEach(sub => {
+            if (sub !== '未分類' && !customSubjectOrder.includes(sub)) {
+                customSubjectOrder.push(sub);
+            }
+        });
+
+        // カスタムの順番（D&Dで並び替えた順番）に従って並び替える
+        subjects.sort((a, b) => {
+            if (a === '未分類') return 1; // 未分類は常に一番最後
+            if (b === '未分類') return -1;
+            return customSubjectOrder.indexOf(a) - customSubjectOrder.indexOf(b);
+        });
+
         let html = `<button class="tab-btn ${currentActiveTab === 'ALL' ? 'active' : ''}" onclick="${switchFunctionName}('ALL')">すべて<span class="tab-count">${tasks.length}</span></button>`;
+        
         subjects.forEach(sub => {
             const count = tasks.filter(q => (q.subject || "未分類") === sub).length;
-            html += `<button class="tab-btn ${currentActiveTab === sub ? 'active' : ''}" onclick="${switchFunctionName}('${sub}')">${sub}<span class="tab-count">${count}</span></button>`;
+            
+            if (sub === '未分類') {
+                // 未分類タブは固定したいのでドラッグ＆ドロップ対象外
+                html += `<button class="tab-btn ${currentActiveTab === sub ? 'active' : ''}" onclick="${switchFunctionName}('${sub}')">${sub}<span class="tab-count">${count}</span></button>`;
+            } else {
+                // ドラッグ＆ドロップ用の属性（draggable 等）を追加
+                html += `<button class="tab-btn ${currentActiveTab === sub ? 'active' : ''}" 
+                            draggable="true" 
+                            ondragstart="handleDragStart(event, '${sub}')"
+                            ondragover="handleDragOver(event)"
+                            ondrop="handleDrop(event, '${sub}')"
+                            ondragend="handleDragEnd(event)"
+                            onclick="${switchFunctionName}('${sub}')">
+                            ${sub}<span class="tab-count">${count}</span>
+                        </button>`;
+            }
         });
         tabsContainer.innerHTML = html;
+    }
+
+    // 👇 ドラッグ＆ドロップのイベント処理関数群
+    function handleDragStart(e, subject) {
+        draggedSubject = subject;
+        e.dataTransfer.effectAllowed = 'move';
+        e.target.style.opacity = '0.5';
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault(); // ドロップを許可するために必須
+        e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDrop(e, targetSubject) {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        if (draggedSubject && draggedSubject !== targetSubject) {
+            // customSubjectOrder配列内の要素を並び替える
+            const fromIdx = customSubjectOrder.indexOf(draggedSubject);
+            const toIdx = customSubjectOrder.indexOf(targetSubject);
+            
+            if (fromIdx !== -1 && toIdx !== -1) {
+                customSubjectOrder.splice(fromIdx, 1);
+                customSubjectOrder.splice(toIdx, 0, draggedSubject);
+                
+                persist(); // 並び替えた状態を保存（クラウドにも反映）
+                refreshUI(); // 画面を再描画
+            }
+        }
+        draggedSubject = null;
+    }
+
+    function handleDragEnd(e) {
+        e.target.style.opacity = '1';
+        draggedSubject = null;
     }
 
     function switchOverdueTab(subject) { currentOverdueTab = subject; refreshUI(); }
@@ -913,11 +775,19 @@
 
     function getConditionalClass(q) {
         if (!q) return '';
-        const targetText = `${q.subject || ''} ${q.field || ''} ${q.textbook || ''}`;
+        
+        const subject = q.subject || '';
+        if (subject.includes('財務') || subject.includes('財計')) return 'bg-zaikei';
+        if (subject.includes('管理') || subject.includes('管計')) return 'bg-kankei';
+        if (subject.includes('租税')) return 'bg-sozei';
+        if (subject.includes('経営')) return 'bg-keiei';
+        
+        const targetText = `${q.field || ''} ${q.textbook || ''}`;
         if (targetText.includes('財務') || targetText.includes('財計')) return 'bg-zaikei';
         if (targetText.includes('管理') || targetText.includes('管計')) return 'bg-kankei';
         if (targetText.includes('租税')) return 'bg-sozei';
         if (targetText.includes('経営')) return 'bg-keiei';
+        
         return '';
     }
 
@@ -925,26 +795,26 @@
         const container = document.getElementById(containerId);
         if (list.length === 0) { container.innerHTML = '<p style="color:#999; padding:10px;">取り組むべき問題はありません。</p>'; return; }
         container.innerHTML = '';
-        
+
         const grouped = list.reduce((acc, q) => {
             const f = q.field || "未分類"; if (!acc[f]) acc[f] = []; acc[f].push(q); return acc;
         }, {});
-        
+
         for (const field in grouped) {
             const sec = document.createElement('div'); sec.className = 'field-group';
             sec.innerHTML = `<div class="field-header"><span>${field}</span><span class="badge" style="background:var(--primary)">${grouped[field].length}</span></div>`;
-            
+
             grouped[field].forEach(q => {
                 const div = document.createElement('div'); div.className = `problem-item ${getConditionalClass(q)}`;
                 div.innerHTML = `
-                    <div class="problem-meta">${q.textbook} | ${q.subject} | 正解: ${q.correctCount} / 誤答: ${q.incorrectCount}</div>
+                    <div class="problem-meta">${q.textbook} | ${q.subject || '未分類'} | 正解: ${q.correctCount} / 誤答: ${q.incorrectCount}</div>
                     <div class="problem-name">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark">⚠️苦手</span>' : ''}</div>
-                    ${q.memo ? `<div class="memo-box">${q.memo.replace(/\n/g,'<br>')}</div>` : ''}
+                   ${q.memo ? `<div class="memo-box">${q.memo.replace(/\n/g,'<br>')}</div>` : ''}
                     <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
-                        <button class="btn-success" onclick="handleAnswer('${q.id}', true)">正解</button>
-                        <button class="btn-danger" onclick="handleAnswer('${q.id}', false)">不正解</button>
-                        <button class="btn-gray" style="font-size:11px; padding:6px 10px; margin-left:auto;" onclick="suspendQuestion('${q.id}')">除外</button>
-                    </div>`;
+                       <button class="btn-success" onclick="handleAnswer('${q.id}', true)">正解</button>
+                       <button class="btn-danger" onclick="handleAnswer('${q.id}', false)">不正解</button>
+                       <button class="btn-gray" style="font-size:11px; padding:6px 10px; margin-left:auto;" onclick="suspendQuestion('${q.id}')">除外</button>
+                   </div>`;
                 sec.appendChild(div);
             });
             container.appendChild(sec);
@@ -957,7 +827,7 @@
         container.innerHTML = '';
         list.forEach(q => {
             const div = document.createElement('div'); div.className = 'sidebar-item';
-            div.innerHTML = `・<strong>${q.name}</strong> <span style="color:#888;">[${q.subject} > ${q.field}]</span>`;
+            div.innerHTML = `・<strong>${q.name}</strong> <span style="color:#888;">[${q.subject || '未分類'} > ${q.field || '未分類'}]</span>`;
             container.appendChild(div);
         });
     }
@@ -965,57 +835,51 @@
     function renderAdminTable() {
         const tbody = document.getElementById('admin-tbody'); tbody.innerHTML = '';
         const source = showingTrash ? trash : questions;
+        
+        const adminSubjects = [...new Set(source.map(q => q.subject || "未分類"))];
+        if (currentAdminTab !== 'ALL' && !adminSubjects.includes(currentAdminTab)) {
+            currentAdminTab = 'ALL';
+        }
         renderTabs(source, 'admin-tabs', currentAdminTab, 'switchAdminTab');
+        
         const filteredSource = currentAdminTab === 'ALL' ? source : source.filter(q => (q.subject || "未分類") === currentAdminTab);
 
-        const checkMatch = (q, text) => {
-            const txt = `${q.subject || ''} ${q.field || ''} ${q.textbook || ''}`; return txt.includes(text);
-        };
-        const zaikei = filteredSource.filter(q => checkMatch(q, '財務') || checkMatch(q, '財計'));
-        const kankei = filteredSource.filter(q => checkMatch(q, '管理') || checkMatch(q, '管計'));
-        const sozei = filteredSource.filter(q => checkMatch(q, '租税'));
-        const keiei = filteredSource.filter(q => checkMatch(q, '経営'));
-        const others = filteredSource.filter(q => !checkMatch(q, '財務') && !checkMatch(q, '財計') && !checkMatch(q, '管理') && !checkMatch(q, '管計') && !checkMatch(q, '租税') && !checkMatch(q, '経営'));
-        
         const sortFn = (a, b) => {
             if (a.isSuspended !== b.isSuspended) return a.isSuspended ? 1 : -1;
             let vA = a[currentSort.key]; let vB = b[currentSort.key];
             if (typeof vA === 'string') return currentSort.asc ? vA.localeCompare(vB, 'ja') : vB.localeCompare(vA, 'ja');
             return currentSort.asc ? (vA || 0) - (vB || 0) : (vB || 0) - (vA || 0);
         };
-        
-        [{ label: '--- 財務会計系 ---', data: zaikei.sort(sortFn) },
-         { label: '--- 管理会計系 ---', data: kankei.sort(sortFn) },
-         { label: '--- 租税法 ---', data: sozei.sort(sortFn) },
-         { label: '--- 経営学 ---', data: keiei.sort(sortFn) },
-         { label: '--- その他 ---', data: others.sort(sortFn) }].forEach(group => {
-            if (group.data.length > 0) {
-                const sep = document.createElement('tr');
-                sep.innerHTML = `<td colspan="9" style="background:#eee; font-weight:bold; text-align:center; padding:2px; font-size:10px;">${group.label}</td>`;
-                tbody.appendChild(sep);
-                group.data.forEach(q => {
-                    const row = document.createElement('tr'); row.className = getConditionalClass(q);
-                    const dateDisplay = q.isSuspended ? '<span class="badge badge-suspended">⏸️ 除外中</span>' : new Date(q.nextDate).toLocaleDateString();
-                    const dateStyle = (!q.isSuspended && q.nextDate < getToday()) ? 'color:red;font-weight:bold;' : '';
 
-                    row.innerHTML = `
-                        <td><input type="checkbox" class="admin-checkbox" data-id="${q.id}"></td>
-                        <td>${q.textbook}</td><td>${q.subject || '未分類'}</td><td>${q.field || '未分類'}</td>
-                        <td style="font-weight:bold;">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark" style="font-size:9px;">苦手</span>' : ''}</td>
-                        <td style="${dateStyle}">${dateDisplay}</td><td>${q.correctCount}</td><td>${q.incorrectCount}</td>
-                        <td>
-                            ${showingTrash ? 
-                                `<button class="btn-success" style="font-size:10px; padding:4px 8px;" onclick="restoreQuestion('${q.id}')">復元</button> <button class="btn-danger" style="font-size:10px; padding:4px 8px;" onclick="permanentlyDelete('${q.id}')">完全削除</button>` : 
-                                `<button class="btn-primary" style="font-size:10px; padding:4px 8px;" onclick="editQuestion('${q.id}')">編集</button> <button class="btn-danger" style="font-size:10px; padding:4px 8px;" onclick="deleteQuestion('${q.id}')">削除</button>`}
-                        </td>`;
-                    tbody.appendChild(row);
-                });
-            }
+        filteredSource.sort(sortFn);
+        
+        if (filteredSource.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:10px;">データがありません</td></tr>';
+            return;
+        }
+
+        filteredSource.forEach(q => {
+            const row = document.createElement('tr'); 
+            row.className = getConditionalClass(q);
+            const dateDisplay = q.isSuspended ? '<span class="badge badge-suspended">⏸️ 除外中</span>' : new Date(q.nextDate).toLocaleDateString();
+            const dateStyle = (!q.isSuspended && q.nextDate < getToday()) ? 'color:red;font-weight:bold;' : '';
+
+            row.innerHTML = `
+                <td><input type="checkbox" class="admin-checkbox" data-id="${q.id}"></td>
+                <td>${q.textbook}</td><td>${q.subject || '未分類'}</td><td>${q.field || '未分類'}</td>
+                <td style="font-weight:bold;">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark" style="font-size:9px;">苦手</span>' : ''}</td>
+                <td style="${dateStyle}">${dateDisplay}</td><td>${q.correctCount}</td><td>${q.incorrectCount}</td>
+                <td>
+                    ${showingTrash ? 
+                        `<button class="btn-success" style="font-size:10px; padding:4px 8px;" onclick="restoreQuestion('${q.id}')">復元</button> <button class="btn-danger" style="font-size:10px; padding:4px 8px;" onclick="permanentlyDelete('${q.id}')">完全削除</button>` : 
+                        `<button class="btn-primary" style="font-size:10px; padding:4px 8px;" onclick="editQuestion('${q.id}')">編集</button> <button class="btn-danger" style="font-size:10px; padding:4px 8px;" onclick="deleteQuestion('${q.id}')">削除</button>`}
+                </td>`;
+            tbody.appendChild(row);
         });
     }
 
-    function sortQuestions(key) {
-        if (currentSort.key === key) currentSort.asc = !currentSort.asc;
+    function sortAdmin(key) {
+        if (currentSort.key === key) { currentSort.asc = !currentSort.asc; }
         else { currentSort.key = key; currentSort.asc = true; }
         renderAdminTable();
     }
@@ -1052,8 +916,8 @@
     }
 
     function toggleSelectAll() {
-        const isChecked = document.getElementById('select-all').checked;
-        document.querySelectorAll('.admin-checkbox').forEach(cb => cb.checked = isChecked);
+        const checked = document.getElementById('select-all').checked;
+        document.querySelectorAll('.admin-checkbox').forEach(cb => cb.checked = checked);
     }
 
     function toggleTrashView() {
@@ -1072,7 +936,8 @@
     function updateDatalists() {
         const allData = [...questions, ...trash];
         const textbooks = [...new Set(allData.map(q => q.textbook || ""))].filter(Boolean);
-        const subjects = [...new Set(allData.map(q => q.subject || ""))].filter(Boolean);
+        const subjects = [...new Set(allData.map(q => q.subject || ""))].filter(s => s && s !== '未分類');
+        
         document.getElementById('textbooks-dl').innerHTML = textbooks.map(t => `<option value="${t}">`).join('');
         document.getElementById('subjects-dl').innerHTML = subjects.map(s => `<option value="${s}">`).join('');
     }
@@ -1082,19 +947,20 @@
         const inputId = isModal ? 'edit-q-subject' : 'q-subject';
         const dlId = isModal ? 'edit-fields-dl' : 'fields-dl';
         const currentSubject = document.getElementById(inputId).value.trim();
-        
+
+        let fields = [];
         if (currentSubject) {
-            const filteredData = allData.filter(q => q.subject === currentSubject);
-            const fields = [...new Set(filteredData.map(q => q.field || ""))].filter(Boolean);
-            document.getElementById(dlId).innerHTML = fields.map(f => `<option value="${f}">`).join('');
+            fields = [...new Set(allData.filter(q => (q.subject || '未分類') === currentSubject).map(q => q.field || ""))].filter(Boolean);
         } else {
-            document.getElementById(dlId).innerHTML = '';
+            fields = [...new Set(allData.map(q => q.field || ""))].filter(Boolean);
         }
+        document.getElementById(dlId).innerHTML = fields.map(f => `<option value="${f}">`).join('');
     }
 
     function exportData() {
         const area = document.getElementById('io-area');
-        area.value = JSON.stringify({ questions, trash, globalNotes, lastUpdatedAt });
+        // 👇 customSubjectOrder もバックアップに含める
+        area.value = JSON.stringify({ questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder });
         area.select(); document.execCommand('copy'); alert("バックアップをコピーしました。");
     }
 
@@ -1105,6 +971,7 @@
             if (confirm("上書きしますか？")) {
                 questions = data.questions || []; trash = data.trash || [];
                 globalNotes = data.globalNotes || { zaikei: '', kankei: '' };
+                customSubjectOrder = data.customSubjectOrder || []; // 👇 追加
                 lastUpdatedAt = data.lastUpdatedAt || Date.now();
                 persist(); refreshUI(); alert("復元完了。");
             }
@@ -1114,7 +981,8 @@
     function clearAllData() {
         if (!confirm("全データ消去しますか？") || !confirm("本当に消去しますか？")) return;
         if (prompt("「DELETE」と入力してください。") === "DELETE") {
-            questions = []; trash = []; globalNotes = { zaikei: '', kankei: '' }; lastUpdatedAt = Date.now();
+            // 👇 customSubjectOrder もリセット
+            questions = []; trash = []; globalNotes = { zaikei: '', kankei: '' }; customSubjectOrder = []; lastUpdatedAt = Date.now();
             localStorage.clear(); refreshUI(); alert("消去完了。");
         }
     }
