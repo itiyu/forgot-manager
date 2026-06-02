@@ -806,6 +806,7 @@
 
             grouped[field].forEach(q => {
                 const div = document.createElement('div'); div.className = `problem-item ${getConditionalClass(q)}`;
+                // 👇 ここで「編集」ボタンを「除外」ボタンの隣に追加しました
                 div.innerHTML = `
                     <div class="problem-meta">${q.textbook} | ${q.subject || '未分類'} | 正解: ${q.correctCount} / 誤答: ${q.incorrectCount}</div>
                     <div class="problem-name">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark">⚠️苦手</span>' : ''}</div>
@@ -813,7 +814,8 @@
                     <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
                        <button class="btn-success" onclick="handleAnswer('${q.id}', true)">正解</button>
                        <button class="btn-danger" onclick="handleAnswer('${q.id}', false)">不正解</button>
-                       <button class="btn-gray" style="font-size:11px; padding:6px 10px; margin-left:auto;" onclick="suspendQuestion('${q.id}')">除外</button>
+                       <button class="btn-primary" style="font-size:11px; padding:6px 10px; margin-left:auto;" onclick="editQuestion('${q.id}')">編集</button>
+                       <button class="btn-gray" style="font-size:11px; padding:6px 10px;" onclick="suspendQuestion('${q.id}')">除外</button>
                    </div>`;
                 sec.appendChild(div);
             });
