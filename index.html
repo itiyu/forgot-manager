@@ -82,6 +82,10 @@
         @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         
         .bulk-actions { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .quota-panel { background:#f8fafc; border:1px solid #dbe5ef; border-radius:6px; padding:12px; margin-bottom:14px; }
+        .quota-stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+        .quota-stat { background:white; border:1px solid #e2e8f0; border-radius:5px; padding:7px 10px; font-size:12px; }
+        .priority-badge { background:#34495e; color:white; padding:2px 6px; border-radius:10px; font-size:10px; margin-left:5px; }
 
         .grid-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         @media (max-width: 768px) {
@@ -143,6 +147,14 @@
                 <input type="text" id="q-textbook" list="textbooks-dl" placeholder="例: テキスト1">
                 <datalist id="textbooks-dl"></datalist>
             </div>
+            <div class="form-group" style="max-width:160px;">
+                <label>重要度（出題の比重）</label>
+                <select id="q-importance">
+                    <option value="1">低</option>
+                    <option value="2" selected>中</option>
+                    <option value="3">高</option>
+                </select>
+            </div>
         </div>
         <div class="form-group" style="margin-bottom: 15px;">
             <label>メモ (解説や補足など)</label>
@@ -166,6 +178,22 @@
 
             <div class="card">
                 <h2>📅 今日やるべき問題</h2>
+                <div class="quota-panel">
+                    <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+                        <div style="min-width:170px;">
+                            <label>今日の上限（この日だけ）</label>
+                            <input type="number" id="daily-limit-input" min="0" max="999" value="15">
+                        </div>
+                        <button class="btn-primary" onclick="saveTodayLimit()">上限を適用</button>
+                    </div>
+                    <div class="quota-stats">
+                        <div class="quota-stat">本日の総ノルマ: <strong id="quota-total">0</strong>問</div>
+                        <div class="quota-stat">今日やる設定: <strong id="quota-planned">0</strong>問</div>
+                        <div class="quota-stat">完了: <strong id="quota-completed">0</strong>問</div>
+                        <div class="quota-stat">明日へ先送り: <strong id="quota-deferred">0</strong>問</div>
+                    </div>
+                    <div style="font-size:11px; color:#64748b; margin-top:8px;">期限超過・誤答回数・重要度をもとに、優先度の高い問題から今日の枠に入れます。</div>
+                </div>
                 <div class="tabs-container" id="today-tabs"></div>
                 <div id="today-container"></div>
             </div>
@@ -181,6 +209,10 @@
                 <textarea id="note-zaikei" rows="4" placeholder="ここにメモ..." onchange="saveNotes()"></textarea>
                 <h3 class="text-kankei" style="margin:15px 0 5px 0;">📓 管理会計 メモ</h3>
                 <textarea id="note-kankei" rows="4" placeholder="ここにメモ..." onchange="saveNotes()"></textarea>
+                <h3 class="text-keiei" style="margin:15px 0 5px 0;">📓 経営学 メモ</h3>
+                <textarea id="note-keiei" rows="4" placeholder="ここにメモ..." onchange="saveNotes()"></textarea>
+                <h3 class="text-sozei" style="margin:15px 0 5px 0;">📓 租税法 メモ</h3>
+                <textarea id="note-sozei" rows="4" placeholder="ここにメモ..." onchange="saveNotes()"></textarea>
             </div>
         </div>
     </div>
@@ -207,6 +239,7 @@
                             <th onclick="sortAdmin('subject')" class="sort-icon">科目</th>
                             <th onclick="sortAdmin('field')" class="sort-icon">分野</th>
                             <th onclick="sortAdmin('name')" class="sort-icon">問題番号</th>
+                            <th onclick="sortAdmin('importance')" class="sort-icon">重要度</th>
                             <th onclick="sortAdmin('nextDate')" class="sort-icon">次回期日</th>
                             <th onclick="sortAdmin('correctCount')" class="sort-icon">正解</th>
                             <th onclick="sortAdmin('incorrectCount')" class="sort-icon">誤答</th>
@@ -258,6 +291,14 @@
                 <input type="text" id="edit-q-textbook" list="edit-textbooks-dl">
                 <datalist id="edit-textbooks-dl"></datalist>
             </div>
+            <div class="form-group" style="max-width:160px;">
+                <label>重要度（出題の比重）</label>
+                <select id="edit-q-importance">
+                    <option value="1">低</option>
+                    <option value="2">中</option>
+                    <option value="3">高</option>
+                </select>
+            </div>
         </div>
         <div class="form-group" style="margin-bottom: 20px;">
             <label>メモ (解説や補足など)</label>
@@ -275,11 +316,12 @@
     const STORAGE_KEY = 'forgot_manager';
     let questions = [];
     let trash = []; 
-    let globalNotes = { zaikei: '', kankei: '' };
+    let globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '' };
     let lastUpdatedAt = 0;
     let currentSort = { key: 'nextDate', asc: true };
     let showingTrash = false;
-    const MAX_DAILY_TASKS = 15; 
+    const DEFAULT_DAILY_LIMIT = 15;
+    let dailyPlans = {};
 
     let currentOverdueTab = 'ALL';
     let currentTodayTab = 'ALL';
@@ -298,6 +340,8 @@
         document.getElementById('q-textbook').value = localStorage.getItem('last_textbook') || '';
         document.getElementById('note-zaikei').value = globalNotes.zaikei || '';
         document.getElementById('note-kankei').value = globalNotes.kankei || '';
+        document.getElementById('note-keiei').value = globalNotes.keiei || '';
+        document.getElementById('note-sozei').value = globalNotes.sozei || '';
         
         document.getElementById('sync-token').value = localStorage.getItem('sync_github_token') || '';
         document.getElementById('sync-gist-id').value = localStorage.getItem('sync_gist_id') || '';
@@ -322,15 +366,17 @@
                 const data = JSON.parse(saved);
                 questions = data.questions || [];
                 trash = data.trash || [];
-                globalNotes = data.globalNotes || { zaikei: '', kankei: '' };
+                globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '', ...(data.globalNotes || {}) };
                 lastUpdatedAt = data.lastUpdatedAt || 0;
                 customSubjectOrder = data.customSubjectOrder || []; // 👇 追加
+                dailyPlans = data.dailyPlans || {};
 
                 const sanitize = (q) => {
                     if (q.field === undefined && q.subject !== undefined) {
                         q.field = q.subject; q.subject = '未分類';
                     }
                     if (q.isSuspended === undefined) q.isSuspended = false;
+                    if (q.importance === undefined) q.importance = 2;
                     return q;
                 };
                 questions = questions.map(sanitize);
@@ -342,7 +388,7 @@
     function persist(skipCloud = false) {
         lastUpdatedAt = Date.now();
         // 👇 customSubjectOrder も保存対象に含める
-        const data = { questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder };
+        const data = { questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, dailyPlans };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         localStorage.setItem('last_subject', document.getElementById('q-subject').value);
         localStorage.setItem('last_field', document.getElementById('q-field').value);
@@ -408,8 +454,9 @@
                 updateSyncStatus("📥 最新データを読込中...", "#9b59b6");
                 questions = cloudData.questions || [];
                 trash = cloudData.trash || [];
-                globalNotes = cloudData.globalNotes || { zaikei: '', kankei: '' };
+                globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '', ...(cloudData.globalNotes || {}) };
                 customSubjectOrder = cloudData.customSubjectOrder || []; // 👇 追加
+                dailyPlans = cloudData.dailyPlans || {};
                 lastUpdatedAt = cloudData.lastUpdatedAt;
                 
                 persist(true);
@@ -417,6 +464,8 @@
                 
                 document.getElementById('note-zaikei').value = globalNotes.zaikei || '';
                 document.getElementById('note-kankei').value = globalNotes.kankei || '';
+                document.getElementById('note-keiei').value = globalNotes.keiei || '';
+                document.getElementById('note-sozei').value = globalNotes.sozei || '';
                 updateSyncStatus("☁️ 同期済み (最新読込完了)", "#27ae60");
             } else {
                 updateSyncStatus("☁️ 同期済み", "#27ae60");
@@ -431,7 +480,7 @@
 
     async function uploadToCloud(token, gistId) {
         // 👇 customSubjectOrder もアップロードに含める
-        const localData = { questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder };
+        const localData = { questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, dailyPlans };
         const res = await fetch(`https://api.github.com/gists/${gistId}`, {
             method: 'PATCH',
             headers: {
@@ -483,11 +532,78 @@
     function saveNotes() {
         globalNotes.zaikei = document.getElementById('note-zaikei').value;
         globalNotes.kankei = document.getElementById('note-kankei').value;
+        globalNotes.keiei = document.getElementById('note-keiei').value;
+        globalNotes.sozei = document.getElementById('note-sozei').value;
         persist();
     }
 
     function getToday() {
         const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime();
+    }
+
+    function getDateKey(timestamp = getToday()) {
+        const d = new Date(timestamp);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    function getImportanceLabel(value) {
+        return value === 3 ? '高' : value === 1 ? '低' : '中';
+    }
+
+    function getPriorityScore(q, referenceDate = getToday()) {
+        const overdueDays = Math.max(0, Math.floor((referenceDate - q.nextDate) / (24 * 60 * 60 * 1000)));
+        return overdueDays * 10 + (q.incorrectCount || 0) * 20 + (q.importance || 2) * 15 - (q.streak || 0) * 2;
+    }
+
+    function ensureTodayPlan(recalculate = false) {
+        const today = getToday();
+        const tomorrow = today + 24 * 60 * 60 * 1000;
+        const key = getDateKey(today);
+        if (!dailyPlans[key]) dailyPlans[key] = { limit: DEFAULT_DAILY_LIMIT, completedIds: [], deferred: [] };
+        const plan = dailyPlans[key];
+        if (!Array.isArray(plan.completedIds)) plan.completedIds = [];
+        if (!Array.isArray(plan.deferred)) plan.deferred = [];
+        if (!Number.isFinite(Number(plan.limit))) plan.limit = DEFAULT_DAILY_LIMIT;
+        plan.limit = Math.max(0, Math.floor(Number(plan.limit)));
+
+        if (recalculate || !plan.initialized) {
+            plan.deferred.forEach(item => {
+                const q = questions.find(x => x.id === item.id);
+                if (q && !q.isSuspended && q.nextDate === tomorrow) q.nextDate = item.originalDate;
+            });
+            plan.deferred = [];
+
+            const completedSet = new Set(plan.completedIds);
+            const due = questions
+                .filter(q => !q.isSuspended && q.nextDate <= today && !completedSet.has(q.id))
+                .sort((a, b) => getPriorityScore(b, today) - getPriorityScore(a, today));
+
+            const remainingSlots = Math.max(0, plan.limit - plan.completedIds.length);
+            const overflow = due.slice(remainingSlots);
+            overflow.forEach(q => {
+                plan.deferred.push({ id: q.id, originalDate: q.nextDate });
+                q.nextDate = tomorrow;
+            });
+            plan.initialized = true;
+            persist();
+        }
+        return plan;
+    }
+
+    function saveTodayLimit() {
+        const input = document.getElementById('daily-limit-input');
+        const value = Math.max(0, Math.floor(Number(input.value)));
+        if (!Number.isFinite(value)) { alert('0以上の数字を入力してください。'); return; }
+        const key = getDateKey();
+        if (!dailyPlans[key]) dailyPlans[key] = { completedIds: [], deferred: [] };
+        dailyPlans[key].limit = value;
+        dailyPlans[key].initialized = false;
+        ensureTodayPlan(true);
+        persist();
+        refreshUI();
     }
 
     function smoothFutureSchedule() {
@@ -500,9 +616,9 @@
 
         while (loopCount < 365) {
             const tasksOnDate = questions.filter(q => q.nextDate === currentDate && !q.isSuspended);
-            if (tasksOnDate.length > MAX_DAILY_TASKS) {
-                const sortedByStreak = tasksOnDate.sort((a, b) => b.streak - a.streak);
-                const overflow = sortedByStreak.slice(MAX_DAILY_TASKS);
+            if (tasksOnDate.length > DEFAULT_DAILY_LIMIT) {
+                const sortedByPriority = tasksOnDate.sort((a, b) => getPriorityScore(b, currentDate) - getPriorityScore(a, currentDate));
+                const overflow = sortedByPriority.slice(DEFAULT_DAILY_LIMIT);
                 overflow.forEach(q => {
                     q.nextDate += dayMs;
                     tasksChanged = true;
@@ -538,6 +654,7 @@
         const field = document.getElementById('q-field').value.trim();
         const textbook = document.getElementById('q-textbook').value.trim();
         const memo = document.getElementById('q-memo').value.trim();
+        const importance = Number(document.getElementById('q-importance').value) || 2;
 
         if (!nameInput || !subject || !field || !textbook) {
             alert("問題番号、科目、分野、テキスト名は必須です。"); return;
@@ -553,7 +670,7 @@
 
             questions.push({
                 id: Date.now().toString() + '-' + index + '-' + Math.random().toString(36).substr(2, 5),
-                name: name, subject: subject, field: field, textbook: textbook, memo: memo,
+                name: name, subject: subject, field: field, textbook: textbook, memo: memo, importance: importance,
                 streak: 0, everCorrect: false, correctCount: 0, incorrectCount: 0,
                 nextDate: getToday(), createdAt: Date.now(), isSuspended: false
             });
@@ -561,6 +678,7 @@
         });
 
         if (addedCount > 0) {
+            ensureTodayPlan(true);
             persist(); 
             document.getElementById('q-name').value = '';
             document.getElementById('q-memo').value = '';
@@ -577,6 +695,7 @@
         document.getElementById('edit-q-field').value = q.field || '';
         document.getElementById('edit-q-textbook').value = q.textbook;
         document.getElementById('edit-q-memo').value = q.memo;
+        document.getElementById('edit-q-importance').value = String(q.importance || 2);
         document.getElementById('edit-modal-id').value = q.id;
         updateFieldsDatalist(true);
         document.getElementById('edit-modal').classList.remove('hidden');
@@ -589,19 +708,20 @@
         const field = document.getElementById('edit-q-field').value.trim();
         const textbook = document.getElementById('edit-q-textbook').value.trim();
         const memo = document.getElementById('edit-q-memo').value.trim();
+        const importance = Number(document.getElementById('edit-q-importance').value) || 2;
 
         if (!name || !subject || !field || !textbook) { alert("必須項目を埋めてください。"); return; }
         const index = questions.findIndex(q => q.id === id);
         
         if (index !== -1) {
             questions[index].name = name; questions[index].subject = subject;
-            questions[index].field = field; questions[index].textbook = textbook; questions[index].memo = memo;
+            questions[index].field = field; questions[index].textbook = textbook; questions[index].memo = memo; questions[index].importance = importance;
             if (questions[index].isSuspended) {
                 questions[index].isSuspended = false;
                 if (questions[index].nextDate < getToday()) questions[index].nextDate = getToday();
             }
         }
-        persist(); closeEditModal(); refreshUI();
+        ensureTodayPlan(true); persist(); closeEditModal(); refreshUI();
     }
 
     function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
@@ -610,6 +730,9 @@
         const index = questions.findIndex(q => q.id === id); if (index === -1) return;
         const q = questions[index];
         const today = getToday();
+        const key = getDateKey(today);
+        if (!dailyPlans[key]) dailyPlans[key] = { limit: DEFAULT_DAILY_LIMIT, completedIds: [], deferred: [], initialized: true };
+        if (!dailyPlans[key].completedIds.includes(id)) dailyPlans[key].completedIds.push(id);
         let daysToAdd = 0;
 
         if (isCorrect) {
@@ -644,16 +767,28 @@
     }
 
     function refreshUI() {
-        smoothFutureSchedule();
+        const plan = ensureTodayPlan(false);
         const today = getToday();
         const tomorrow = today + (24 * 60 * 60 * 1000);
         
         const activeQuestions = questions.filter(q => !q.isSuspended);
-        const allSorted = [...activeQuestions].sort((a,b) => a.nextDate - b.nextDate);
+        const allSorted = [...activeQuestions].sort((a,b) => {
+            if (a.nextDate !== b.nextDate) return a.nextDate - b.nextDate;
+            return getPriorityScore(b, today) - getPriorityScore(a, today);
+        });
 
         const overdue = allSorted.filter(q => q.nextDate < today);
         const todayTasks = allSorted.filter(q => q.nextDate === today);
         const tomorrowTasks = allSorted.filter(q => q.nextDate === tomorrow);
+
+        const deferredCount = plan.deferred.length;
+        const completedCount = plan.completedIds.length;
+        const plannedCount = Math.max(completedCount, Math.min(plan.limit, completedCount + overdue.length + todayTasks.length));
+        document.getElementById('daily-limit-input').value = plan.limit;
+        document.getElementById('quota-total').innerText = completedCount + overdue.length + todayTasks.length + deferredCount;
+        document.getElementById('quota-planned').innerText = plannedCount;
+        document.getElementById('quota-completed').innerText = completedCount;
+        document.getElementById('quota-deferred').innerText = deferredCount;
 
         const suspendBtn = document.getElementById('suspend-overdue-btn');
         if (overdue.length > 0) {
@@ -808,7 +943,7 @@
                 const div = document.createElement('div'); div.className = `problem-item ${getConditionalClass(q)}`;
                 // 👇 ここで「編集」ボタンを「除外」ボタンの隣に追加しました
                 div.innerHTML = `
-                    <div class="problem-meta">${q.textbook} | ${q.subject || '未分類'} | 正解: ${q.correctCount} / 誤答: ${q.incorrectCount}</div>
+                    <div class="problem-meta">${q.textbook} | ${q.subject || '未分類'} | 正解: ${q.correctCount} / 誤答: ${q.incorrectCount} <span class="priority-badge">重要度: ${getImportanceLabel(q.importance || 2)}</span></div>
                     <div class="problem-name">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark">⚠️苦手</span>' : ''}</div>
                    ${q.memo ? `<div class="memo-box">${q.memo.replace(/\n/g,'<br>')}</div>` : ''}
                     <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
@@ -829,7 +964,9 @@
         container.innerHTML = '';
         list.forEach(q => {
             const div = document.createElement('div'); div.className = 'sidebar-item';
-            div.innerHTML = `・<strong>${q.name}</strong> <span style="color:#888;">[${q.subject || '未分類'} > ${q.field || '未分類'}]</span>`;
+            const todayPlan = dailyPlans[getDateKey()] || { deferred: [] };
+            const deferredMark = todayPlan.deferred.some(item => item.id === q.id) ? ' <span style="color:#e67e22;font-size:10px;">（今日から先送り）</span>' : '';
+            div.innerHTML = `・<strong>${q.name}</strong> <span style="color:#888;">[${q.subject || '未分類'} > ${q.field || '未分類'}]</span>${deferredMark}`;
             container.appendChild(div);
         });
     }
@@ -856,7 +993,7 @@
         filteredSource.sort(sortFn);
         
         if (filteredSource.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:10px;">データがありません</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:10px;">データがありません</td></tr>';
             return;
         }
 
@@ -870,6 +1007,7 @@
                 <td><input type="checkbox" class="admin-checkbox" data-id="${q.id}"></td>
                 <td>${q.textbook}</td><td>${q.subject || '未分類'}</td><td>${q.field || '未分類'}</td>
                 <td style="font-weight:bold;">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark" style="font-size:9px;">苦手</span>' : ''}</td>
+                <td>${getImportanceLabel(q.importance || 2)}</td>
                 <td style="${dateStyle}">${dateDisplay}</td><td>${q.correctCount}</td><td>${q.incorrectCount}</td>
                 <td>
                     ${showingTrash ? 
@@ -962,7 +1100,7 @@
     function exportData() {
         const area = document.getElementById('io-area');
         // 👇 customSubjectOrder もバックアップに含める
-        area.value = JSON.stringify({ questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder });
+        area.value = JSON.stringify({ questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, dailyPlans });
         area.select(); document.execCommand('copy'); alert("バックアップをコピーしました。");
     }
 
@@ -972,8 +1110,9 @@
             const data = JSON.parse(area.value);
             if (confirm("上書きしますか？")) {
                 questions = data.questions || []; trash = data.trash || [];
-                globalNotes = data.globalNotes || { zaikei: '', kankei: '' };
+                globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '', ...(data.globalNotes || {}) };
                 customSubjectOrder = data.customSubjectOrder || []; // 👇 追加
+                dailyPlans = data.dailyPlans || {};
                 lastUpdatedAt = data.lastUpdatedAt || Date.now();
                 persist(); refreshUI(); alert("復元完了。");
             }
@@ -984,7 +1123,7 @@
         if (!confirm("全データ消去しますか？") || !confirm("本当に消去しますか？")) return;
         if (prompt("「DELETE」と入力してください。") === "DELETE") {
             // 👇 customSubjectOrder もリセット
-            questions = []; trash = []; globalNotes = { zaikei: '', kankei: '' }; customSubjectOrder = []; lastUpdatedAt = Date.now();
+            questions = []; trash = []; globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '' }; customSubjectOrder = []; dailyPlans = {}; lastUpdatedAt = Date.now();
             localStorage.clear(); refreshUI(); alert("消去完了。");
         }
     }
