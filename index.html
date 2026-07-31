@@ -86,6 +86,10 @@
         .quota-stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
         .quota-stat { background:white; border:1px solid #e2e8f0; border-radius:5px; padding:7px 10px; font-size:12px; }
         .priority-badge { background:#34495e; color:white; padding:2px 6px; border-radius:10px; font-size:10px; margin-left:5px; }
+        .study-date-panel { background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:12px; margin-bottom:14px; }
+        .study-date-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .study-date-display { background:white; border:1px solid #fdba74; border-radius:6px; padding:8px 12px; font-size:13px; font-weight:bold; color:#9a3412; }
+        .study-date-note { margin-top:7px; color:#9a3412; font-size:11px; }
 
         .grid-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         @media (max-width: 768px) {
@@ -178,6 +182,15 @@
 
             <div class="card">
                 <h2>📅 今日やるべき問題</h2>
+                <div class="study-date-panel">
+                    <div class="study-date-row">
+                        <button class="btn-warning" onclick="shiftStudyDate(-1)">◀ 1日巻き戻す</button>
+                        <div class="study-date-display">学習上の今日：<span id="study-date-display">—</span></div>
+                        <button class="btn-gray" onclick="shiftStudyDate(1)">1日進める ▶</button>
+                        <button class="btn-primary" onclick="resetStudyDate()">現実の今日に戻す</button>
+                    </div>
+                    <div class="study-date-note" id="study-date-note">実際の期限は変更せず、アプリが「今日」と判断する日だけをずらします。</div>
+                </div>
                 <div class="quota-panel">
                     <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
                         <div style="min-width:170px;">
@@ -314,6 +327,10 @@
 
 <script>
     const STORAGE_KEY = 'forgot_manager';
+    const SYNC_DIRTY_KEY = 'forgot_manager_sync_dirty';
+    const SYNC_BASELINE_KEY = 'forgot_manager_sync_baseline';
+    const SYNC_BACKUPS_KEY = 'forgot_manager_sync_backups';
+
     let questions = [];
     let trash = []; 
     let globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '' };
@@ -322,27 +339,25 @@
     let showingTrash = false;
     const DEFAULT_DAILY_LIMIT = 15;
     let dailyPlans = {};
+    let appSettings = { studyDateOffsetDays: 0 };
 
     let currentOverdueTab = 'ALL';
     let currentTodayTab = 'ALL';
     let currentAdminTab = 'ALL'; 
     let isSyncing = false;
 
-    // 👇 追加: ドラッグ＆ドロップ用の並び順データ
+    // ドラッグ＆ドロップ用の並び順データ
     let customSubjectOrder = [];
     let draggedSubject = null;
 
     window.onload = async () => {
         loadFromLocalStorage();
+        initializeSyncMetadata();
+        applyNotesToInputs();
         
         document.getElementById('q-subject').value = localStorage.getItem('last_subject') || '';
         document.getElementById('q-field').value = localStorage.getItem('last_field') || '';
         document.getElementById('q-textbook').value = localStorage.getItem('last_textbook') || '';
-        document.getElementById('note-zaikei').value = globalNotes.zaikei || '';
-        document.getElementById('note-kankei').value = globalNotes.kankei || '';
-        document.getElementById('note-keiei').value = globalNotes.keiei || '';
-        document.getElementById('note-sozei').value = globalNotes.sozei || '';
-        
         document.getElementById('sync-token').value = localStorage.getItem('sync_github_token') || '';
         document.getElementById('sync-gist-id').value = localStorage.getItem('sync_gist_id') || '';
         
@@ -354,8 +369,8 @@
         document.getElementById('edit-q-field').addEventListener('focus', () => updateFieldsDatalist(true));
 
         if (getSyncSettings().token && getSyncSettings().gistId) {
-            updateSyncStatus("🔄 自動同期中...", "#f39c12");
-            await syncWithCloud();
+            updateSyncStatus("🔄 クラウドを確認中...", "#f39c12");
+            await syncWithCloud({ startup: true });
         }
     };
 
@@ -364,39 +379,103 @@
         if (saved) {
             try {
                 const data = JSON.parse(saved);
-                questions = data.questions || [];
-                trash = data.trash || [];
-                globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '', ...(data.globalNotes || {}) };
-                lastUpdatedAt = data.lastUpdatedAt || 0;
-                customSubjectOrder = data.customSubjectOrder || []; // 👇 追加
-                dailyPlans = data.dailyPlans || {};
-
-                const sanitize = (q) => {
-                    if (q.field === undefined && q.subject !== undefined) {
-                        q.field = q.subject; q.subject = '未分類';
-                    }
-                    if (q.isSuspended === undefined) q.isSuspended = false;
-                    if (q.importance === undefined) q.importance = 2;
-                    return q;
-                };
-                questions = questions.map(sanitize);
-                trash = trash.map(sanitize);
+                applyDataObject(data);
             } catch (e) { console.error("LocalStorage読込失敗", e); }
         }
     }
 
-    function persist(skipCloud = false) {
-        lastUpdatedAt = Date.now();
-        // 👇 customSubjectOrder も保存対象に含める
-        const data = { questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, dailyPlans };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    function sanitizeQuestion(q) {
+        if (q.field === undefined && q.subject !== undefined) {
+            q.field = q.subject;
+            q.subject = '未分類';
+        }
+        if (q.isSuspended === undefined) q.isSuspended = false;
+        if (q.importance === undefined) q.importance = 2;
+        return q;
+    }
+
+    function applyDataObject(data) {
+        questions = (data.questions || []).map(sanitizeQuestion);
+        trash = (data.trash || []).map(sanitizeQuestion);
+        globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '', ...(data.globalNotes || {}) };
+        lastUpdatedAt = data.lastUpdatedAt || 0;
+        customSubjectOrder = data.customSubjectOrder || [];
+        dailyPlans = data.dailyPlans || {};
+        appSettings = { studyDateOffsetDays: 0, ...(data.appSettings || {}) };
+        appSettings.studyDateOffsetDays = Math.min(0, Math.floor(Number(appSettings.studyDateOffsetDays) || 0));
+    }
+
+    function getCurrentData() {
+        return { questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, dailyPlans, appSettings };
+    }
+
+    function getComparableData(data) {
+        return {
+            questions: data.questions || [],
+            trash: data.trash || [],
+            globalNotes: { zaikei: '', kankei: '', keiei: '', sozei: '', ...(data.globalNotes || {}) },
+            customSubjectOrder: data.customSubjectOrder || [],
+            dailyPlans: data.dailyPlans || {},
+            appSettings: { studyDateOffsetDays: 0, ...(data.appSettings || {}) }
+        };
+    }
+
+    function dataContentsEqual(a, b) {
+        return JSON.stringify(getComparableData(a)) === JSON.stringify(getComparableData(b));
+    }
+
+    function initializeSyncMetadata() {
+        if (localStorage.getItem(SYNC_DIRTY_KEY) === null) {
+            // 旧版から移行した最初の一回は、安全のためローカルを「未同期」とみなす。
+            localStorage.setItem(SYNC_DIRTY_KEY, localStorage.getItem(STORAGE_KEY) ? 'true' : 'false');
+        }
+        if (localStorage.getItem(SYNC_BASELINE_KEY) === null) {
+            localStorage.setItem(SYNC_BASELINE_KEY, '0');
+        }
+    }
+
+    function hasLocalChanges() {
+        return localStorage.getItem(SYNC_DIRTY_KEY) === 'true';
+    }
+
+    function setLocalChanges(value) {
+        localStorage.setItem(SYNC_DIRTY_KEY, value ? 'true' : 'false');
+    }
+
+    function getSyncBaseline() {
+        return Number(localStorage.getItem(SYNC_BASELINE_KEY) || 0);
+    }
+
+    function setSyncBaseline(value) {
+        localStorage.setItem(SYNC_BASELINE_KEY, String(value || 0));
+    }
+
+    function saveLocalData({ touchTimestamp = true, markDirty = true } = {}) {
+        if (touchTimestamp) lastUpdatedAt = Date.now();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(getCurrentData()));
         localStorage.setItem('last_subject', document.getElementById('q-subject').value);
         localStorage.setItem('last_field', document.getElementById('q-field').value);
         localStorage.setItem('last_textbook', document.getElementById('q-textbook').value);
 
-        if (!skipCloud) {
-            syncWithCloud();
+        if (markDirty) {
+            setLocalChanges(true);
+            if (getSyncSettings().token && getSyncSettings().gistId) {
+                updateSyncStatus("● この端末に未同期の変更あり", "#e67e22");
+            }
         }
+    }
+
+    // 既存コードから呼ばれる保存関数。今後は勝手にクラウドへ送信しない。
+    function persist() {
+        saveLocalData({ touchTimestamp: true, markDirty: true });
+    }
+
+    function applyNotesToInputs() {
+        const ids = ['zaikei', 'kankei', 'keiei', 'sozei'];
+        ids.forEach(key => {
+            const el = document.getElementById(`note-${key}`);
+            if (el) el.value = globalNotes[key] || '';
+        });
     }
 
     function getSyncSettings() {
@@ -412,8 +491,10 @@
         localStorage.setItem('sync_gist_id', settings.gistId);
         if (!settings.token || !settings.gistId) {
             updateSyncStatus("未設定 (ローカル保存)", "#2c3e50");
+        } else if (hasLocalChanges()) {
+            updateSyncStatus("● 設定保存済・未同期の変更あり", "#e67e22");
         } else {
-            updateSyncStatus("設定保存済 (未同期)", "#7f8c8d");
+            updateSyncStatus("設定保存済 (未確認)", "#7f8c8d");
         }
     }
 
@@ -426,61 +507,145 @@
         }
     }
 
-    async function syncWithCloud() {
+    function createRecoveryBackup(label, data) {
+        try {
+            const backups = JSON.parse(localStorage.getItem(SYNC_BACKUPS_KEY) || '[]');
+            backups.unshift({ label, savedAt: Date.now(), data });
+            localStorage.setItem(SYNC_BACKUPS_KEY, JSON.stringify(backups.slice(0, 5)));
+        } catch (e) {
+            console.warn('復旧バックアップの保存に失敗', e);
+        }
+    }
+
+    async function fetchCloudState(token, gistId) {
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+            headers: { 'Authorization': `token ${token}` }
+        });
+        if (!res.ok) throw new Error(`クラウドとの接続に失敗しました (${res.status})`);
+
+        const gistData = await res.json();
+        const file = gistData.files['forgot_manager_data.json'];
+        let cloudData = null;
+        if (file && file.content) cloudData = JSON.parse(file.content);
+        return { gistData, cloudData };
+    }
+
+    function applyCloudData(cloudData) {
+        createRecoveryBackup('クラウド読込前のローカル', getCurrentData());
+        applyDataObject(cloudData);
+        saveLocalData({ touchTimestamp: false, markDirty: false });
+        setLocalChanges(false);
+        setSyncBaseline(cloudData.lastUpdatedAt || 0);
+        applyNotesToInputs();
+        refreshUI();
+    }
+
+    async function syncWithCloud({ startup = false } = {}) {
         if (isSyncing) return;
         const { token, gistId } = getSyncSettings();
         if (!token || !gistId) return;
 
         isSyncing = true;
         try {
-            const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-                headers: { 'Authorization': `token ${token}` }
-            });
+            const { cloudData } = await fetchCloudState(token, gistId);
+            const localData = getCurrentData();
 
-            if (!res.ok) throw new Error("クラウドとの接続に失敗しました。");
-            const gistData = await res.json();
-            const file = gistData.files['forgot_manager_data.json'];
-
-            let cloudData = null;
-            if (file && file.content) {
-                cloudData = JSON.parse(file.content);
+            if (!cloudData) {
+                updateSyncStatus("☁️ クラウドは空です・手動同期で送信", "#7f8c8d");
+                return;
             }
 
-            if (!cloudData || !cloudData.lastUpdatedAt || lastUpdatedAt > cloudData.lastUpdatedAt) {
-                updateSyncStatus("📤 クラウドへ保存中...", "#3498db");
-                await uploadToCloud(token, gistId);
+            if (dataContentsEqual(localData, cloudData)) {
+                setLocalChanges(false);
+                setSyncBaseline(cloudData.lastUpdatedAt || 0);
                 updateSyncStatus("☁️ 同期済み", "#27ae60");
-            } else if (cloudData.lastUpdatedAt > lastUpdatedAt) {
-                updateSyncStatus("📥 最新データを読込中...", "#9b59b6");
-                questions = cloudData.questions || [];
-                trash = cloudData.trash || [];
-                globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '', ...(cloudData.globalNotes || {}) };
-                customSubjectOrder = cloudData.customSubjectOrder || []; // 👇 追加
-                dailyPlans = cloudData.dailyPlans || {};
-                lastUpdatedAt = cloudData.lastUpdatedAt;
-                
-                persist(true);
-                refreshUI();
-                
-                document.getElementById('note-zaikei').value = globalNotes.zaikei || '';
-                document.getElementById('note-kankei').value = globalNotes.kankei || '';
-                document.getElementById('note-keiei').value = globalNotes.keiei || '';
-                document.getElementById('note-sozei').value = globalNotes.sozei || '';
-                updateSyncStatus("☁️ 同期済み (最新読込完了)", "#27ae60");
+                return;
+            }
+
+            if (startup) {
+                if (hasLocalChanges()) {
+                    // 起動しただけでは絶対にアップロードしない。
+                    updateSyncStatus("⚠️ ローカルとクラウドが相違・手動同期で選択", "#e67e22");
+                } else {
+                    updateSyncStatus("📥 クラウドから読込中...", "#9b59b6");
+                    applyCloudData(cloudData);
+                    updateSyncStatus("☁️ クラウドを読込済み", "#27ae60");
+                }
+                return;
+            }
+
+            // 手動同期時の処理
+            if (!hasLocalChanges()) {
+                applyCloudData(cloudData);
+                updateSyncStatus("☁️ クラウドを読込済み", "#27ae60");
+                alert("クラウド側のデータをこの端末へ読み込みました。");
+                return;
+            }
+
+            const baseline = getSyncBaseline();
+            const cloudChangedSinceLastSync = baseline === 0 || (cloudData.lastUpdatedAt || 0) !== baseline;
+
+            if (cloudChangedSinceLastSync) {
+                const choice = prompt(
+                    "この端末とクラウドの両方に異なるデータがあります。\n\n" +
+                    `この端末：${questions.length}問／更新 ${formatTimestamp(lastUpdatedAt)}\n` +
+                    `クラウド：${(cloudData.questions || []).length}問／更新 ${formatTimestamp(cloudData.lastUpdatedAt)}\n\n` +
+                    "クラウドを使う → CLOUD と入力\n" +
+                    "この端末でクラウドを上書き → LOCAL と入力\n" +
+                    "何もせず閉じる → キャンセル"
+                );
+
+                if (!choice) {
+                    updateSyncStatus("⚠️ 同期をキャンセルしました", "#e67e22");
+                    return;
+                }
+
+                if (choice.trim().toUpperCase() === 'CLOUD') {
+                    applyCloudData(cloudData);
+                    updateSyncStatus("☁️ クラウドを読込済み", "#27ae60");
+                    alert("クラウド側のデータを読み込みました。直前のローカル状態は端末内に復旧用として保存されています。");
+                    return;
+                }
+
+                if (choice.trim().toUpperCase() !== 'LOCAL') {
+                    updateSyncStatus("⚠️ 入力が違うため同期しませんでした", "#e67e22");
+                    alert("CLOUD または LOCAL と正確に入力してください。");
+                    return;
+                }
             } else {
-                updateSyncStatus("☁️ 同期済み", "#27ae60");
+                const ok = confirm(
+                    `この端末のデータ（${questions.length}問）をクラウドへ送信しますか？\n` +
+                    "クラウドの現在データは、端末内に復旧用バックアップとして保存してから上書きします。"
+                );
+                if (!ok) {
+                    updateSyncStatus("⚠️ 同期をキャンセルしました", "#e67e22");
+                    return;
+                }
             }
+
+            createRecoveryBackup('アップロード前のクラウド', cloudData);
+            updateSyncStatus("📤 クラウドへ保存中...", "#3498db");
+            await uploadToCloud(token, gistId);
+            setLocalChanges(false);
+            setSyncBaseline(lastUpdatedAt);
+            updateSyncStatus("☁️ 同期済み", "#27ae60");
+            alert("この端末のデータをクラウドへ保存しました。");
         } catch (e) {
             console.error(e);
             updateSyncStatus("❌ 同期エラー", "#e74c3c");
+            if (!startup) alert(`同期に失敗しました。\n${e.message}`);
         } finally {
             isSyncing = false;
         }
     }
 
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return '不明';
+        return new Date(timestamp).toLocaleString('ja-JP');
+    }
+
     async function uploadToCloud(token, gistId) {
-        // 👇 customSubjectOrder もアップロードに含める
-        const localData = { questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, dailyPlans };
+        const localData = getCurrentData();
         const res = await fetch(`https://api.github.com/gists/${gistId}`, {
             method: 'PATCH',
             headers: {
@@ -495,7 +660,7 @@
                 }
             })
         });
-        if (!res.ok) throw new Error("アップロード失敗");
+        if (!res.ok) throw new Error(`アップロード失敗 (${res.status})`);
     }
 
     async function manualSync() {
@@ -505,8 +670,7 @@
             return;
         }
         updateSyncStatus("🔄 手動同期中...", "#f39c12");
-        await syncWithCloud();
-        alert("同期処理が完了しました（ステータス表示をご確認ください）。");
+        await syncWithCloud({ startup: false });
     }
 
     async function testCloudConnection() {
@@ -537,8 +701,52 @@
         persist();
     }
 
+    function getRealToday() {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+    }
+
     function getToday() {
-        const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime();
+        const dayMs = 24 * 60 * 60 * 1000;
+        return getRealToday() + (appSettings.studyDateOffsetDays * dayMs);
+    }
+
+    function formatStudyDate(timestamp) {
+        return new Date(timestamp).toLocaleDateString('ja-JP', {
+            year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+        });
+    }
+
+    function updateStudyDateUI() {
+        const display = document.getElementById('study-date-display');
+        const note = document.getElementById('study-date-note');
+        if (!display || !note) return;
+        const offset = appSettings.studyDateOffsetDays || 0;
+        display.textContent = formatStudyDate(getToday());
+        note.textContent = offset === 0
+            ? '現実の日付と同じです。実際の期限は変更されていません。'
+            : `現実より ${Math.abs(offset)} 日前を「今日」として表示中です。問題を解くと、この学習日を基準に次回期日が決まります。`;
+    }
+
+    function shiftStudyDate(days) {
+        const current = Math.floor(Number(appSettings.studyDateOffsetDays) || 0);
+        const next = Math.min(0, current + days);
+        if (next === current) {
+            if (days > 0) alert('これ以上進めると未来日になるため、現実の今日で止めています。');
+            return;
+        }
+        appSettings.studyDateOffsetDays = next;
+        persist();
+        refreshUI();
+    }
+
+    function resetStudyDate() {
+        if ((appSettings.studyDateOffsetDays || 0) === 0) return;
+        if (!confirm('学習上の日付を現実の今日に戻しますか？')) return;
+        appSettings.studyDateOffsetDays = 0;
+        persist();
+        refreshUI();
     }
 
     function getDateKey(timestamp = getToday()) {
@@ -767,6 +975,7 @@
     }
 
     function refreshUI() {
+        updateStudyDateUI();
         const plan = ensureTodayPlan(false);
         const today = getToday();
         const tomorrow = today + (24 * 60 * 60 * 1000);
@@ -1100,7 +1309,7 @@
     function exportData() {
         const area = document.getElementById('io-area');
         // 👇 customSubjectOrder もバックアップに含める
-        area.value = JSON.stringify({ questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, dailyPlans });
+        area.value = JSON.stringify({ questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, dailyPlans, appSettings });
         area.select(); document.execCommand('copy'); alert("バックアップをコピーしました。");
     }
 
@@ -1113,6 +1322,8 @@
                 globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '', ...(data.globalNotes || {}) };
                 customSubjectOrder = data.customSubjectOrder || []; // 👇 追加
                 dailyPlans = data.dailyPlans || {};
+                appSettings = { studyDateOffsetDays: 0, ...(data.appSettings || {}) };
+                appSettings.studyDateOffsetDays = Math.min(0, Math.floor(Number(appSettings.studyDateOffsetDays) || 0));
                 lastUpdatedAt = data.lastUpdatedAt || Date.now();
                 persist(); refreshUI(); alert("復元完了。");
             }
@@ -1123,7 +1334,7 @@
         if (!confirm("全データ消去しますか？") || !confirm("本当に消去しますか？")) return;
         if (prompt("「DELETE」と入力してください。") === "DELETE") {
             // 👇 customSubjectOrder もリセット
-            questions = []; trash = []; globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '' }; customSubjectOrder = []; dailyPlans = {}; lastUpdatedAt = Date.now();
+            questions = []; trash = []; globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '' }; customSubjectOrder = []; dailyPlans = {}; appSettings = { studyDateOffsetDays: 0 }; lastUpdatedAt = Date.now();
             localStorage.clear(); refreshUI(); alert("消去完了。");
         }
     }
