@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>忘却曲線マネージャー</title>
+    <title>忘却曲線マネージャー（ノルマなし）</title>
     <style>
         :root {
             --primary: #3498db;
@@ -82,10 +82,6 @@
         @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         
         .bulk-actions { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
-        .quota-panel { background:#f8fafc; border:1px solid #dbe5ef; border-radius:6px; padding:12px; margin-bottom:14px; }
-        .quota-stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-        .quota-stat { background:white; border:1px solid #e2e8f0; border-radius:5px; padding:7px 10px; font-size:12px; }
-        .priority-badge { background:#34495e; color:white; padding:2px 6px; border-radius:10px; font-size:10px; margin-left:5px; }
         .study-date-panel { background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:12px; margin-bottom:14px; }
         .study-date-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
         .study-date-display { background:white; border:1px solid #fdba74; border-radius:6px; padding:8px 12px; font-size:13px; font-weight:bold; color:#9a3412; }
@@ -110,7 +106,7 @@
                 ☁️ クラウド同期設定 (PC・スマホ連動) <span id="sync-status" style="font-size:12px; margin-left:10px; color:#2c3e50; background:#fff; padding:2px 8px; border-radius:10px; border:1px solid #cbd5e1;">未設定 (ローカル保存)</span>
             </summary>
             <div style="margin-top: 15px; border-top: 1px dashed #cbd5e1; padding-top: 15px;">
-                <p style="font-size:12px; color:#555; margin:0 0 12px 0;">GitHubのGist機能を利用してデータをオンライン同期します。一度設定すれば自動で同期されます。</p>
+                <p style="font-size:12px; color:#555; margin:0 0 12px 0;">GitHubのGist機能を利用します。起動時に自動読込し、変更後は約1.5秒で自動保存します。別端末との競合時だけ確認を求めます。</p>
                 <div class="form-row">
                     <div class="form-group">
                         <label>GitHub トークン (Token)</label>
@@ -122,7 +118,7 @@
                     </div>
                 </div>
                 <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button class="btn-primary" style="font-size:11px; padding:6px 12px;" onclick="manualSync()">🔄 今すぐ手動同期</button>
+                    <button class="btn-primary" style="font-size:11px; padding:6px 12px;" onclick="manualSync()">🔄 今すぐ同期</button>
                     <button class="btn-gray" style="font-size:11px; padding:6px 12px;" onclick="testCloudConnection()">🔍 接続テスト</button>
                 </div>
             </div>
@@ -151,14 +147,6 @@
                 <input type="text" id="q-textbook" list="textbooks-dl" placeholder="例: テキスト1">
                 <datalist id="textbooks-dl"></datalist>
             </div>
-            <div class="form-group" style="max-width:160px;">
-                <label>重要度（出題の比重）</label>
-                <select id="q-importance">
-                    <option value="1">低</option>
-                    <option value="2" selected>中</option>
-                    <option value="3">高</option>
-                </select>
-            </div>
         </div>
         <div class="form-group" style="margin-bottom: 15px;">
             <label>メモ (解説や補足など)</label>
@@ -181,7 +169,7 @@
             </div>
 
             <div class="card">
-                <h2>📅 今日やるべき問題</h2>
+                <h2>📅 今日が復習日の問題</h2>
                 <div class="study-date-panel">
                     <div class="study-date-row">
                         <button class="btn-warning" onclick="shiftStudyDate(-1)">◀ 1日巻き戻す</button>
@@ -190,22 +178,6 @@
                         <button class="btn-primary" onclick="resetStudyDate()">現実の今日に戻す</button>
                     </div>
                     <div class="study-date-note" id="study-date-note">実際の期限は変更せず、アプリが「今日」と判断する日だけをずらします。</div>
-                </div>
-                <div class="quota-panel">
-                    <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
-                        <div style="min-width:170px;">
-                            <label>今日の上限（この日だけ）</label>
-                            <input type="number" id="daily-limit-input" min="0" max="999" value="15">
-                        </div>
-                        <button class="btn-primary" onclick="saveTodayLimit()">上限を適用</button>
-                    </div>
-                    <div class="quota-stats">
-                        <div class="quota-stat">本日の総ノルマ: <strong id="quota-total">0</strong>問</div>
-                        <div class="quota-stat">今日やる設定: <strong id="quota-planned">0</strong>問</div>
-                        <div class="quota-stat">完了: <strong id="quota-completed">0</strong>問</div>
-                        <div class="quota-stat">明日へ先送り: <strong id="quota-deferred">0</strong>問</div>
-                    </div>
-                    <div style="font-size:11px; color:#64748b; margin-top:8px;">期限超過・誤答回数・重要度をもとに、優先度の高い問題から今日の枠に入れます。</div>
                 </div>
                 <div class="tabs-container" id="today-tabs"></div>
                 <div id="today-container"></div>
@@ -252,7 +224,6 @@
                             <th onclick="sortAdmin('subject')" class="sort-icon">科目</th>
                             <th onclick="sortAdmin('field')" class="sort-icon">分野</th>
                             <th onclick="sortAdmin('name')" class="sort-icon">問題番号</th>
-                            <th onclick="sortAdmin('importance')" class="sort-icon">重要度</th>
                             <th onclick="sortAdmin('nextDate')" class="sort-icon">次回期日</th>
                             <th onclick="sortAdmin('correctCount')" class="sort-icon">正解</th>
                             <th onclick="sortAdmin('incorrectCount')" class="sort-icon">誤答</th>
@@ -304,14 +275,6 @@
                 <input type="text" id="edit-q-textbook" list="edit-textbooks-dl">
                 <datalist id="edit-textbooks-dl"></datalist>
             </div>
-            <div class="form-group" style="max-width:160px;">
-                <label>重要度（出題の比重）</label>
-                <select id="edit-q-importance">
-                    <option value="1">低</option>
-                    <option value="2">中</option>
-                    <option value="3">高</option>
-                </select>
-            </div>
         </div>
         <div class="form-group" style="margin-bottom: 20px;">
             <label>メモ (解説や補足など)</label>
@@ -337,14 +300,16 @@
     let lastUpdatedAt = 0;
     let currentSort = { key: 'nextDate', asc: true };
     let showingTrash = false;
-    const DEFAULT_DAILY_LIMIT = 15;
-    let dailyPlans = {};
     let appSettings = { studyDateOffsetDays: 0 };
 
     let currentOverdueTab = 'ALL';
     let currentTodayTab = 'ALL';
     let currentAdminTab = 'ALL'; 
     let isSyncing = false;
+    let autoSyncTimer = null;
+    let cloudPollTimer = null;
+    const AUTO_SYNC_DELAY_MS = 1500;
+    const CLOUD_POLL_INTERVAL_MS = 60000;
 
     // ドラッグ＆ドロップ用の並び順データ
     let customSubjectOrder = [];
@@ -370,7 +335,8 @@
 
         if (getSyncSettings().token && getSyncSettings().gistId) {
             updateSyncStatus("🔄 クラウドを確認中...", "#f39c12");
-            await syncWithCloud({ startup: true });
+            await syncWithCloud({ startup: true, automatic: true });
+            cloudPollTimer = setInterval(() => syncWithCloud({ startup: true, automatic: true, quiet: true }), CLOUD_POLL_INTERVAL_MS);
         }
     };
 
@@ -390,7 +356,7 @@
             q.subject = '未分類';
         }
         if (q.isSuspended === undefined) q.isSuspended = false;
-        if (q.importance === undefined) q.importance = 2;
+        if (Object.prototype.hasOwnProperty.call(q, 'importance')) delete q.importance;
         return q;
     }
 
@@ -400,22 +366,27 @@
         globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '', ...(data.globalNotes || {}) };
         lastUpdatedAt = data.lastUpdatedAt || 0;
         customSubjectOrder = data.customSubjectOrder || [];
-        dailyPlans = data.dailyPlans || {};
         appSettings = { studyDateOffsetDays: 0, ...(data.appSettings || {}) };
         appSettings.studyDateOffsetDays = Math.min(0, Math.floor(Number(appSettings.studyDateOffsetDays) || 0));
     }
 
     function getCurrentData() {
-        return { questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, dailyPlans, appSettings };
+        return { questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, appSettings };
+    }
+
+    function stripLegacyImportance(list) {
+        return (list || []).map(item => {
+            const { importance, ...rest } = item || {};
+            return rest;
+        });
     }
 
     function getComparableData(data) {
         return {
-            questions: data.questions || [],
-            trash: data.trash || [],
+            questions: stripLegacyImportance(data.questions),
+            trash: stripLegacyImportance(data.trash),
             globalNotes: { zaikei: '', kankei: '', keiei: '', sozei: '', ...(data.globalNotes || {}) },
             customSubjectOrder: data.customSubjectOrder || [],
-            dailyPlans: data.dailyPlans || {},
             appSettings: { studyDateOffsetDays: 0, ...(data.appSettings || {}) }
         };
     }
@@ -460,14 +431,22 @@
         if (markDirty) {
             setLocalChanges(true);
             if (getSyncSettings().token && getSyncSettings().gistId) {
-                updateSyncStatus("● この端末に未同期の変更あり", "#e67e22");
+                updateSyncStatus("● 変更を保存中…", "#e67e22");
+                scheduleAutoSync();
             }
         }
     }
 
-    // 既存コードから呼ばれる保存関数。今後は勝手にクラウドへ送信しない。
+    // 既存コードから呼ばれる保存関数。ローカル保存後、少し待って自動同期する。
     function persist() {
         saveLocalData({ touchTimestamp: true, markDirty: true });
+    }
+
+    function scheduleAutoSync() {
+        clearTimeout(autoSyncTimer);
+        autoSyncTimer = setTimeout(() => {
+            syncWithCloud({ automatic: true, quiet: true });
+        }, AUTO_SYNC_DELAY_MS);
     }
 
     function applyNotesToInputs() {
@@ -492,9 +471,11 @@
         if (!settings.token || !settings.gistId) {
             updateSyncStatus("未設定 (ローカル保存)", "#2c3e50");
         } else if (hasLocalChanges()) {
-            updateSyncStatus("● 設定保存済・未同期の変更あり", "#e67e22");
+            updateSyncStatus("● 設定保存済・自動同期待ち", "#e67e22");
+            scheduleAutoSync();
         } else {
-            updateSyncStatus("設定保存済 (未確認)", "#7f8c8d");
+            updateSyncStatus("🔄 クラウドを確認中…", "#7f8c8d");
+            syncWithCloud({ startup: true, automatic: true, quiet: true });
         }
     }
 
@@ -540,8 +521,11 @@
         refreshUI();
     }
 
-    async function syncWithCloud({ startup = false } = {}) {
-        if (isSyncing) return;
+    async function syncWithCloud({ startup = false, automatic = false, quiet = false } = {}) {
+        if (isSyncing) {
+            if (automatic && hasLocalChanges()) scheduleAutoSync();
+            return;
+        }
         const { token, gistId } = getSyncSettings();
         if (!token || !gistId) return;
 
@@ -551,7 +535,15 @@
             const localData = getCurrentData();
 
             if (!cloudData) {
-                updateSyncStatus("☁️ クラウドは空です・手動同期で送信", "#7f8c8d");
+                if (hasLocalChanges() || questions.length || trash.length) {
+                    updateSyncStatus("📤 初回データをクラウドへ保存中…", "#3498db");
+                    await uploadToCloud(token, gistId);
+                    setLocalChanges(false);
+                    setSyncBaseline(lastUpdatedAt);
+                    updateSyncStatus("☁️ 同期済み", "#27ae60");
+                } else {
+                    updateSyncStatus("☁️ クラウドは空です", "#7f8c8d");
+                }
                 return;
             }
 
@@ -562,69 +554,55 @@
                 return;
             }
 
-            if (startup) {
-                if (hasLocalChanges()) {
-                    // 起動しただけでは絶対にアップロードしない。
-                    updateSyncStatus("⚠️ ローカルとクラウドが相違・手動同期で選択", "#e67e22");
-                } else {
-                    updateSyncStatus("📥 クラウドから読込中...", "#9b59b6");
-                    applyCloudData(cloudData);
-                    updateSyncStatus("☁️ クラウドを読込済み", "#27ae60");
-                }
-                return;
-            }
-
-            // 手動同期時の処理
             if (!hasLocalChanges()) {
+                updateSyncStatus("📥 クラウドから読込中…", "#9b59b6");
                 applyCloudData(cloudData);
-                updateSyncStatus("☁️ クラウドを読込済み", "#27ae60");
-                alert("クラウド側のデータをこの端末へ読み込みました。");
+                updateSyncStatus("☁️ 同期済み", "#27ae60");
                 return;
             }
 
             const baseline = getSyncBaseline();
-            const cloudChangedSinceLastSync = baseline === 0 || (cloudData.lastUpdatedAt || 0) !== baseline;
+            const cloudVersion = cloudData.lastUpdatedAt || 0;
+            const cloudChangedSinceLastSync = baseline === 0 || cloudVersion !== baseline;
 
-            if (cloudChangedSinceLastSync) {
-                const choice = prompt(
-                    "この端末とクラウドの両方に異なるデータがあります。\n\n" +
-                    `この端末：${questions.length}問／更新 ${formatTimestamp(lastUpdatedAt)}\n` +
-                    `クラウド：${(cloudData.questions || []).length}問／更新 ${formatTimestamp(cloudData.lastUpdatedAt)}\n\n` +
-                    "クラウドを使う → CLOUD と入力\n" +
-                    "この端末でクラウドを上書き → LOCAL と入力\n" +
-                    "何もせず閉じる → キャンセル"
-                );
-
-                if (!choice) {
-                    updateSyncStatus("⚠️ 同期をキャンセルしました", "#e67e22");
-                    return;
-                }
-
-                if (choice.trim().toUpperCase() === 'CLOUD') {
-                    applyCloudData(cloudData);
-                    updateSyncStatus("☁️ クラウドを読込済み", "#27ae60");
-                    alert("クラウド側のデータを読み込みました。直前のローカル状態は端末内に復旧用として保存されています。");
-                    return;
-                }
-
-                if (choice.trim().toUpperCase() !== 'LOCAL') {
-                    updateSyncStatus("⚠️ 入力が違うため同期しませんでした", "#e67e22");
-                    alert("CLOUD または LOCAL と正確に入力してください。");
-                    return;
-                }
-            } else {
-                const ok = confirm(
-                    `この端末のデータ（${questions.length}問）をクラウドへ送信しますか？\n` +
-                    "クラウドの現在データは、端末内に復旧用バックアップとして保存してから上書きします。"
-                );
-                if (!ok) {
-                    updateSyncStatus("⚠️ 同期をキャンセルしました", "#e67e22");
-                    return;
-                }
+            if (!cloudChangedSinceLastSync) {
+                createRecoveryBackup('自動アップロード前のクラウド', cloudData);
+                updateSyncStatus("📤 クラウドへ自動保存中…", "#3498db");
+                await uploadToCloud(token, gistId);
+                setLocalChanges(false);
+                setSyncBaseline(lastUpdatedAt);
+                updateSyncStatus("☁️ 自動同期済み", "#27ae60");
+                return;
             }
 
-            createRecoveryBackup('アップロード前のクラウド', cloudData);
-            updateSyncStatus("📤 クラウドへ保存中...", "#3498db");
+            // 他端末も変更済み。ここだけは自動上書きせず、人間の判断を待つ。
+            updateSyncStatus("⚠️ 他端末の変更を検出・今すぐ同期で選択", "#e74c3c");
+            if (automatic || startup) return;
+
+            const choice = prompt(
+                "この端末とクラウドの両方に異なる変更があります。\n\n" +
+                `この端末：${questions.length}問／更新 ${formatTimestamp(lastUpdatedAt)}\n` +
+                `クラウド：${(cloudData.questions || []).length}問／更新 ${formatTimestamp(cloudData.lastUpdatedAt)}\n\n` +
+                "クラウドを使う → CLOUD と入力\n" +
+                "この端末でクラウドを上書き → LOCAL と入力\n" +
+                "何もせず閉じる → キャンセル"
+            );
+
+            if (!choice) return;
+            const normalized = choice.trim().toUpperCase();
+            if (normalized === 'CLOUD') {
+                applyCloudData(cloudData);
+                updateSyncStatus("☁️ クラウドを読込済み", "#27ae60");
+                alert("クラウド側のデータを読み込みました。直前のローカル状態は復旧用に保存されています。");
+                return;
+            }
+            if (normalized !== 'LOCAL') {
+                alert("CLOUD または LOCAL と正確に入力してください。");
+                return;
+            }
+
+            createRecoveryBackup('手動上書き前のクラウド', cloudData);
+            updateSyncStatus("📤 クラウドへ保存中…", "#3498db");
             await uploadToCloud(token, gistId);
             setLocalChanges(false);
             setSyncBaseline(lastUpdatedAt);
@@ -632,8 +610,8 @@
             alert("この端末のデータをクラウドへ保存しました。");
         } catch (e) {
             console.error(e);
-            updateSyncStatus("❌ 同期エラー", "#e74c3c");
-            if (!startup) alert(`同期に失敗しました。\n${e.message}`);
+            updateSyncStatus(hasLocalChanges() ? "❌ 同期失敗・ローカルには保存済み" : "❌ 同期エラー", "#e74c3c");
+            if (!quiet && !automatic && !startup) alert(`同期に失敗しました。\n${e.message}`);
         } finally {
             isSyncing = false;
         }
@@ -670,7 +648,7 @@
             return;
         }
         updateSyncStatus("🔄 手動同期中...", "#f39c12");
-        await syncWithCloud({ startup: false });
+        await syncWithCloud({ startup: false, automatic: false, quiet: false });
     }
 
     async function testCloudConnection() {
@@ -757,88 +735,6 @@
         return `${y}-${m}-${day}`;
     }
 
-    function getImportanceLabel(value) {
-        return value === 3 ? '高' : value === 1 ? '低' : '中';
-    }
-
-    function getPriorityScore(q, referenceDate = getToday()) {
-        const overdueDays = Math.max(0, Math.floor((referenceDate - q.nextDate) / (24 * 60 * 60 * 1000)));
-        return overdueDays * 10 + (q.incorrectCount || 0) * 20 + (q.importance || 2) * 15 - (q.streak || 0) * 2;
-    }
-
-    function ensureTodayPlan(recalculate = false) {
-        const today = getToday();
-        const tomorrow = today + 24 * 60 * 60 * 1000;
-        const key = getDateKey(today);
-        if (!dailyPlans[key]) dailyPlans[key] = { limit: DEFAULT_DAILY_LIMIT, completedIds: [], deferred: [] };
-        const plan = dailyPlans[key];
-        if (!Array.isArray(plan.completedIds)) plan.completedIds = [];
-        if (!Array.isArray(plan.deferred)) plan.deferred = [];
-        if (!Number.isFinite(Number(plan.limit))) plan.limit = DEFAULT_DAILY_LIMIT;
-        plan.limit = Math.max(0, Math.floor(Number(plan.limit)));
-
-        if (recalculate || !plan.initialized) {
-            plan.deferred.forEach(item => {
-                const q = questions.find(x => x.id === item.id);
-                if (q && !q.isSuspended && q.nextDate === tomorrow) q.nextDate = item.originalDate;
-            });
-            plan.deferred = [];
-
-            const completedSet = new Set(plan.completedIds);
-            const due = questions
-                .filter(q => !q.isSuspended && q.nextDate <= today && !completedSet.has(q.id))
-                .sort((a, b) => getPriorityScore(b, today) - getPriorityScore(a, today));
-
-            const remainingSlots = Math.max(0, plan.limit - plan.completedIds.length);
-            const overflow = due.slice(remainingSlots);
-            overflow.forEach(q => {
-                plan.deferred.push({ id: q.id, originalDate: q.nextDate });
-                q.nextDate = tomorrow;
-            });
-            plan.initialized = true;
-            persist();
-        }
-        return plan;
-    }
-
-    function saveTodayLimit() {
-        const input = document.getElementById('daily-limit-input');
-        const value = Math.max(0, Math.floor(Number(input.value)));
-        if (!Number.isFinite(value)) { alert('0以上の数字を入力してください。'); return; }
-        const key = getDateKey();
-        if (!dailyPlans[key]) dailyPlans[key] = { completedIds: [], deferred: [] };
-        dailyPlans[key].limit = value;
-        dailyPlans[key].initialized = false;
-        ensureTodayPlan(true);
-        persist();
-        refreshUI();
-    }
-
-    function smoothFutureSchedule() {
-        let tasksChanged = false;
-        const today = getToday();
-        
-        let currentDate = today + (24 * 60 * 60 * 1000);
-        const dayMs = 24 * 60 * 60 * 1000;
-        let loopCount = 0;
-
-        while (loopCount < 365) {
-            const tasksOnDate = questions.filter(q => q.nextDate === currentDate && !q.isSuspended);
-            if (tasksOnDate.length > DEFAULT_DAILY_LIMIT) {
-                const sortedByPriority = tasksOnDate.sort((a, b) => getPriorityScore(b, currentDate) - getPriorityScore(a, currentDate));
-                const overflow = sortedByPriority.slice(DEFAULT_DAILY_LIMIT);
-                overflow.forEach(q => {
-                    q.nextDate += dayMs;
-                    tasksChanged = true;
-                });
-            }
-            currentDate += dayMs; loopCount++;
-            const remainingFutureTasks = questions.filter(q => q.nextDate >= currentDate && !q.isSuspended);
-            if (remainingFutureTasks.length === 0) break;
-        }
-        if (tasksChanged) persist();
-    }
-
     function parseRange(input) {
         const match = input.match(/^(.*?)(\d+)\s*[~〜]\s*(?:.*?)(\d+)$/);
         if (match) {
@@ -862,7 +758,6 @@
         const field = document.getElementById('q-field').value.trim();
         const textbook = document.getElementById('q-textbook').value.trim();
         const memo = document.getElementById('q-memo').value.trim();
-        const importance = Number(document.getElementById('q-importance').value) || 2;
 
         if (!nameInput || !subject || !field || !textbook) {
             alert("問題番号、科目、分野、テキスト名は必須です。"); return;
@@ -878,7 +773,7 @@
 
             questions.push({
                 id: Date.now().toString() + '-' + index + '-' + Math.random().toString(36).substr(2, 5),
-                name: name, subject: subject, field: field, textbook: textbook, memo: memo, importance: importance,
+                name: name, subject: subject, field: field, textbook: textbook, memo: memo,
                 streak: 0, everCorrect: false, correctCount: 0, incorrectCount: 0,
                 nextDate: getToday(), createdAt: Date.now(), isSuspended: false
             });
@@ -886,7 +781,6 @@
         });
 
         if (addedCount > 0) {
-            ensureTodayPlan(true);
             persist(); 
             document.getElementById('q-name').value = '';
             document.getElementById('q-memo').value = '';
@@ -903,7 +797,6 @@
         document.getElementById('edit-q-field').value = q.field || '';
         document.getElementById('edit-q-textbook').value = q.textbook;
         document.getElementById('edit-q-memo').value = q.memo;
-        document.getElementById('edit-q-importance').value = String(q.importance || 2);
         document.getElementById('edit-modal-id').value = q.id;
         updateFieldsDatalist(true);
         document.getElementById('edit-modal').classList.remove('hidden');
@@ -916,20 +809,19 @@
         const field = document.getElementById('edit-q-field').value.trim();
         const textbook = document.getElementById('edit-q-textbook').value.trim();
         const memo = document.getElementById('edit-q-memo').value.trim();
-        const importance = Number(document.getElementById('edit-q-importance').value) || 2;
 
         if (!name || !subject || !field || !textbook) { alert("必須項目を埋めてください。"); return; }
         const index = questions.findIndex(q => q.id === id);
         
         if (index !== -1) {
             questions[index].name = name; questions[index].subject = subject;
-            questions[index].field = field; questions[index].textbook = textbook; questions[index].memo = memo; questions[index].importance = importance;
+            questions[index].field = field; questions[index].textbook = textbook; questions[index].memo = memo;
             if (questions[index].isSuspended) {
                 questions[index].isSuspended = false;
                 if (questions[index].nextDate < getToday()) questions[index].nextDate = getToday();
             }
         }
-        ensureTodayPlan(true); persist(); closeEditModal(); refreshUI();
+        persist(); closeEditModal(); refreshUI();
     }
 
     function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
@@ -938,9 +830,6 @@
         const index = questions.findIndex(q => q.id === id); if (index === -1) return;
         const q = questions[index];
         const today = getToday();
-        const key = getDateKey(today);
-        if (!dailyPlans[key]) dailyPlans[key] = { limit: DEFAULT_DAILY_LIMIT, completedIds: [], deferred: [], initialized: true };
-        if (!dailyPlans[key].completedIds.includes(id)) dailyPlans[key].completedIds.push(id);
         let daysToAdd = 0;
 
         if (isCorrect) {
@@ -976,28 +865,20 @@
 
     function refreshUI() {
         updateStudyDateUI();
-        const plan = ensureTodayPlan(false);
         const today = getToday();
         const tomorrow = today + (24 * 60 * 60 * 1000);
         
         const activeQuestions = questions.filter(q => !q.isSuspended);
-        const allSorted = [...activeQuestions].sort((a,b) => {
+        const allSorted = [...activeQuestions].sort((a, b) => {
             if (a.nextDate !== b.nextDate) return a.nextDate - b.nextDate;
-            return getPriorityScore(b, today) - getPriorityScore(a, today);
+            return (b.incorrectCount || 0) - (a.incorrectCount || 0);
         });
 
+        // 上限・ノルマ・先送りは使わず、各問題が本来持つ nextDate だけで分類する。
+        // 期限日は表示処理によって変更されない。
         const overdue = allSorted.filter(q => q.nextDate < today);
         const todayTasks = allSorted.filter(q => q.nextDate === today);
         const tomorrowTasks = allSorted.filter(q => q.nextDate === tomorrow);
-
-        const deferredCount = plan.deferred.length;
-        const completedCount = plan.completedIds.length;
-        const plannedCount = Math.max(completedCount, Math.min(plan.limit, completedCount + overdue.length + todayTasks.length));
-        document.getElementById('daily-limit-input').value = plan.limit;
-        document.getElementById('quota-total').innerText = completedCount + overdue.length + todayTasks.length + deferredCount;
-        document.getElementById('quota-planned').innerText = plannedCount;
-        document.getElementById('quota-completed').innerText = completedCount;
-        document.getElementById('quota-deferred').innerText = deferredCount;
 
         const suspendBtn = document.getElementById('suspend-overdue-btn');
         if (overdue.length > 0) {
@@ -1152,7 +1033,7 @@
                 const div = document.createElement('div'); div.className = `problem-item ${getConditionalClass(q)}`;
                 // 👇 ここで「編集」ボタンを「除外」ボタンの隣に追加しました
                 div.innerHTML = `
-                    <div class="problem-meta">${q.textbook} | ${q.subject || '未分類'} | 正解: ${q.correctCount} / 誤答: ${q.incorrectCount} <span class="priority-badge">重要度: ${getImportanceLabel(q.importance || 2)}</span></div>
+                    <div class="problem-meta">${q.textbook} | ${q.subject || '未分類'} | 正解: ${q.correctCount} / 誤答: ${q.incorrectCount}</div>
                     <div class="problem-name">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark">⚠️苦手</span>' : ''}</div>
                    ${q.memo ? `<div class="memo-box">${q.memo.replace(/\n/g,'<br>')}</div>` : ''}
                     <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
@@ -1173,9 +1054,7 @@
         container.innerHTML = '';
         list.forEach(q => {
             const div = document.createElement('div'); div.className = 'sidebar-item';
-            const todayPlan = dailyPlans[getDateKey()] || { deferred: [] };
-            const deferredMark = todayPlan.deferred.some(item => item.id === q.id) ? ' <span style="color:#e67e22;font-size:10px;">（今日から先送り）</span>' : '';
-            div.innerHTML = `・<strong>${q.name}</strong> <span style="color:#888;">[${q.subject || '未分類'} > ${q.field || '未分類'}]</span>${deferredMark}`;
+            div.innerHTML = `・<strong>${q.name}</strong> <span style="color:#888;">[${q.subject || '未分類'} > ${q.field || '未分類'}]</span>`;
             container.appendChild(div);
         });
     }
@@ -1202,7 +1081,7 @@
         filteredSource.sort(sortFn);
         
         if (filteredSource.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:10px;">データがありません</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:10px;">データがありません</td></tr>';
             return;
         }
 
@@ -1216,7 +1095,6 @@
                 <td><input type="checkbox" class="admin-checkbox" data-id="${q.id}"></td>
                 <td>${q.textbook}</td><td>${q.subject || '未分類'}</td><td>${q.field || '未分類'}</td>
                 <td style="font-weight:bold;">${q.name} ${q.incorrectCount > 3 ? '<span class="nigete-mark" style="font-size:9px;">苦手</span>' : ''}</td>
-                <td>${getImportanceLabel(q.importance || 2)}</td>
                 <td style="${dateStyle}">${dateDisplay}</td><td>${q.correctCount}</td><td>${q.incorrectCount}</td>
                 <td>
                     ${showingTrash ? 
@@ -1309,7 +1187,7 @@
     function exportData() {
         const area = document.getElementById('io-area');
         // 👇 customSubjectOrder もバックアップに含める
-        area.value = JSON.stringify({ questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, dailyPlans, appSettings });
+        area.value = JSON.stringify({ questions, trash, globalNotes, lastUpdatedAt, customSubjectOrder, appSettings });
         area.select(); document.execCommand('copy'); alert("バックアップをコピーしました。");
     }
 
@@ -1321,8 +1199,7 @@
                 questions = data.questions || []; trash = data.trash || [];
                 globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '', ...(data.globalNotes || {}) };
                 customSubjectOrder = data.customSubjectOrder || []; // 👇 追加
-                dailyPlans = data.dailyPlans || {};
-                appSettings = { studyDateOffsetDays: 0, ...(data.appSettings || {}) };
+                        appSettings = { studyDateOffsetDays: 0, ...(data.appSettings || {}) };
                 appSettings.studyDateOffsetDays = Math.min(0, Math.floor(Number(appSettings.studyDateOffsetDays) || 0));
                 lastUpdatedAt = data.lastUpdatedAt || Date.now();
                 persist(); refreshUI(); alert("復元完了。");
@@ -1334,7 +1211,7 @@
         if (!confirm("全データ消去しますか？") || !confirm("本当に消去しますか？")) return;
         if (prompt("「DELETE」と入力してください。") === "DELETE") {
             // 👇 customSubjectOrder もリセット
-            questions = []; trash = []; globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '' }; customSubjectOrder = []; dailyPlans = {}; appSettings = { studyDateOffsetDays: 0 }; lastUpdatedAt = Date.now();
+            questions = []; trash = []; globalNotes = { zaikei: '', kankei: '', keiei: '', sozei: '' }; customSubjectOrder = []; appSettings = { studyDateOffsetDays: 0 }; lastUpdatedAt = Date.now();
             localStorage.clear(); refreshUI(); alert("消去完了。");
         }
     }
