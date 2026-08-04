@@ -863,6 +863,46 @@
         persist(); refreshUI();
     }
 
+
+    // 期限超過一覧専用の安定した並び順。
+    // 科目タブの並び → 分野名 → テキスト名 → 登録順 → 問題番号の順で固定する。
+    // nextDate・正解数・誤答数は並び替えに使わないため、回答後も残りの順番がずれない。
+    function compareStableOverdueOrder(a, b) {
+        const subjectA = a.subject || '未分類';
+        const subjectB = b.subject || '未分類';
+        const subjectIndex = subject => {
+            if (subject === '未分類') return Number.MAX_SAFE_INTEGER;
+            const index = customSubjectOrder.indexOf(subject);
+            return index === -1 ? customSubjectOrder.length : index;
+        };
+
+        const subjectDiff = subjectIndex(subjectA) - subjectIndex(subjectB);
+        if (subjectDiff !== 0) return subjectDiff;
+
+        const fieldDiff = (a.field || '未分類').localeCompare(
+            b.field || '未分類',
+            'ja',
+            { numeric: true, sensitivity: 'base' }
+        );
+        if (fieldDiff !== 0) return fieldDiff;
+
+        const textbookDiff = (a.textbook || '').localeCompare(
+            b.textbook || '',
+            'ja',
+            { numeric: true, sensitivity: 'base' }
+        );
+        if (textbookDiff !== 0) return textbookDiff;
+
+        const createdDiff = (a.createdAt || 0) - (b.createdAt || 0);
+        if (createdDiff !== 0) return createdDiff;
+
+        return (a.name || '').localeCompare(
+            b.name || '',
+            'ja',
+            { numeric: true, sensitivity: 'base' }
+        );
+    }
+
     function refreshUI() {
         updateStudyDateUI();
         const today = getToday();
@@ -876,7 +916,11 @@
 
         // 上限・ノルマ・先送りは使わず、各問題が本来持つ nextDate だけで分類する。
         // 期限日は表示処理によって変更されない。
-        const overdue = allSorted.filter(q => q.nextDate < today);
+        // 期限超過だけは期日の古い順ではなく、分野ごとの固定表示にする。
+        // 正解・不正解で1件が一覧から消えても、残りの分野・問題の順番は動かない。
+        const overdue = activeQuestions
+            .filter(q => q.nextDate < today)
+            .sort(compareStableOverdueOrder);
         const todayTasks = allSorted.filter(q => q.nextDate === today);
         const tomorrowTasks = allSorted.filter(q => q.nextDate === tomorrow);
 
